@@ -44,24 +44,24 @@ manpower needs? In other words, where can human resources be more effectively al
 """
 
 # Imports
-
-
+import numpy as np
+import numpy_financial as npf
 
 # Inputs
 
-
+cashflows       = [-500, 200, 147, 128, 130, 235]; # t0, t1, t2, t3, t4, t5
 
 
 # Assumptions
-
+discountRate    = 0.9; # Nine percent per annum
 
 
 
 # Outputs
 
+npv             = npf.npv(discountRate, cashflows);   
 
-
-
+print("Net present value of the investment:%3.2f"%npv);
 
 # Sensitivity
 
