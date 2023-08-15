@@ -49,22 +49,30 @@ import numpy_financial as npf
 
 # Inputs
 
-cashflows       = [-500, 200, 147, 128, 130, 235]; # t0, t1, t2, t3, t4, t5
+PurchasePrice=75000 #EUR
+AnnualSavings=12962 #→EUR
+YearsOfOperation=7 #Years that the robotic system is in operation
 
+cashFlows = [-PurchasePrice]+ [AnnualSavings] * YearsOfOperation # create main list of cash flows
 
 # Assumptions
-discountRate    = 0.9; # Nine percent per annum
-
+discountRate = 0.05; # Five percent per annum
 
 
 # Outputs
 
-npv             = npf.npv(discountRate, cashflows);   
+npv = npf.npv(discountRate, cashFlows)
 
-print("Net present value of the investment:%3.2f"%npv);
+print("Net present value of the investment:%3.2f" % npv)
+
+if npv < 0: 
+    minSavings=npf.pmt(discountRate,YearsOfOperation,PurchasePrice)
+    print("Project has a negative net present value, savings must be %3.2f per year to be profitable" % np.abs(minSavings))
+
 
 # Sensitivity
-
+#TODO - add sensitivity analysis here
+print("Number of years to return on the robotic investment:%3.2f" % npf.nper(discountRate, -AnnualSavings, PurchasePrice))
 
 
 
