@@ -47,32 +47,97 @@ manpower needs? In other words, where can human resources be more effectively al
 import numpy as np
 import numpy_financial as npf
 
-# Inputs
 
-PurchasePrice=75000 #EUR
-AnnualSavings=12962 #→EUR
+## Assumptions
+# Financial
+discountRate = 0.05; # Five percent per annum
+# Energy
+electricityPrice = 0.23 # EUR/kWh
+dieselPrice = 1.79 #EUR/L
+dieselEnergy = 9.6 # kWh/L
+# Data
+dataCarriage = 0.7 #EUR/MB
+# Lifecycle
 YearsOfOperation=7 #Years that the robotic system is in operation
 
-cashFlows = [-PurchasePrice]+ [AnnualSavings] * YearsOfOperation # create main list of cash flows
+## Inputs
+# Mission Inputs
+MissionLength=2 #km driven per misson round
+DailyMissions=15 #number of missions driven per day (TODO - calculate this from load factor)
+YearlyOperationDays = 212 #operating days per year (TODO - differentiate operating days for AGV vs human)
 
-# Assumptions
-discountRate = 0.05; # Five percent per annum
+#Operator driven vehicle use inputs
+VehicleAverageSpeed=20 #km/hr
+VehicleOperatingTime = MissionLength*DailyMissions/VehicleAverageSpeed #hr/day
+
+## Operator driven vehicle use inputs
+# Human Cost inputs
+VehiclePurchasePrice=74000 #EUR
+# Energy
+VehicleEnergyConsumption = 6.5 #L/100km
+VehicleEnergyCost= VehicleEnergyConsumption/100 * dieselPrice*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
+# Operator cost
+OperatorHourlyWage = 21 #EUR/hr
+VehicleOperatorCost = VehicleOperatingTime * OperatorHourlyWage * YearlyOperationDays #EUR/year
+
+VehicleAnnualOperationCost = VehicleEnergyCost+VehicleOperatorCost
+VehicleAnnualMaintenanceCost = 120 *12 #EUR/year
+VehicleAnnualCost = VehicleAnnualOperationCost + VehicleAnnualMaintenanceCost
+VehicleEndOfLifeCost=1800 #EUR
+
+## AGV cost inputs
+AGVPurchasePrice=155000 #EUR
+# Energy
+AGVEnergyConsumption=0.14 #kWh/km
+AGVEnegyCost=electricityPrice*AGVEnergyConsumption*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
+# Data Carriage
+AGVDataUse = 4 #MB/day
+AGVDataCost= dataCarriage*AGVDataUse*YearlyOperationDays #EUR/year
+# Human intervention (disengagements)
+AGVDisengagementPerKm = 0.01 #disengagements per driven km
+AGVDisengagementTime = 5 # minutes per disengagement
+AGVCostPerDisengagement = AGVDisengagementTime / 60 * OperatorHourlyWage
+AGVDisengagementCost = AGVDisengagementPerKm*AGVCostPerDisengagement*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
+# Total costs
+AGVAnnualOperationCost = AGVEnegyCost+AGVDataCost+AGVDisengagementCost #EUR/year
+AGVAnnualMaintenanceCost = 200*12 #EUR/year
+AGVAnnualCost = AGVAnnualOperationCost + AGVAnnualMaintenanceCost
+AGVEndOfLifeCost=4000 #EUR
+
+
+#AGV use inputs
+AGVAverageSpeed=6 #km/hr
+AGVChargeRate=3 #kW
+
+#Number of AGVs needed to replace a human driver
+NumberOfAGVs=1 #TODO - calculate from load factor
+
+
+#Initial investment price
+InvestmentCost = VehiclePurchasePrice - NumberOfAGVs*AGVPurchasePrice # EUR
+
+AnnualSavings = VehicleAnnualCost - NumberOfAGVs*AGVAnnualCost # EUR/year
+
+EndOfLifePrice = VehicleEndOfLifeCost - NumberOfAGVs*AGVEndOfLifeCost # EUR
+
+# Establish cash flows
+cashFlows = [InvestmentCost]+ [AnnualSavings] * (YearsOfOperation-1) + [AnnualSavings + EndOfLifePrice] 
+
 
 
 # Outputs
-
 npv = npf.npv(discountRate, cashFlows)
 
 print("Net present value of the investment:%3.2f" % npv)
 
 if npv < 0: 
-    minSavings=npf.pmt(discountRate,YearsOfOperation,PurchasePrice)
+    minSavings=npf.pmt(discountRate,YearsOfOperation,InvestmentCost)
     print("Project has a negative net present value, savings must be %3.2f per year to be profitable" % np.abs(minSavings))
 
 
 # Sensitivity
 #TODO - add sensitivity analysis here
-print("Number of years to return on the robotic investment:%3.2f" % npf.nper(discountRate, -AnnualSavings, PurchasePrice))
+print("Number of years to return on the robotic investment:%3.2f" % npf.nper(discountRate, -AnnualSavings, InvestmentCost))
 
 
 
