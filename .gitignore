@@ -212,3 +212,6 @@ codegen/
 
 # Octave session info
 octave-workspace
+
+# Output PDF documents
+*.pdf

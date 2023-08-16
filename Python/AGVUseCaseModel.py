@@ -45,9 +45,11 @@ manpower needs? In other words, where can human resources be more effectively al
 
 # Imports
 import numpy as np
+import pandas as pd
 import numpy_financial as npf
-
-
+from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.pyplot as plt
+plt.close('all')
 ## Assumptions
 # Financial
 discountRate = 0.05; # Five percent per annum
@@ -86,7 +88,7 @@ VehicleAnnualCost = VehicleAnnualOperationCost + VehicleAnnualMaintenanceCost
 VehicleEndOfLifeCost=1800 #EUR
 
 ## AGV cost inputs
-AGVPurchasePrice=155000 #EUR
+AGVPurchasePrice=115000 #EUR
 # Energy
 AGVEnergyConsumption=0.14 #kWh/km
 AGVEnegyCost=electricityPrice*AGVEnergyConsumption*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
@@ -123,32 +125,61 @@ EndOfLifePrice = VehicleEndOfLifeCost - NumberOfAGVs*AGVEndOfLifeCost # EUR
 # Establish cash flows
 cashFlows = [InvestmentCost]+ [AnnualSavings] * (YearsOfOperation-1) + [AnnualSavings + EndOfLifePrice] 
 
-
-
-# Outputs
+## Outputs
+figEcon = plt.figure()
+ax = figEcon.add_subplot()
+ax.axis([0, 10, 0, 10])
+figEcon.subplots_adjust(top=0.85)
+#calculate the project net present value
 npv = npf.npv(discountRate, cashFlows)
-
-print("Net present value of the investment:%3.2f" % npv)
-
+ax.text(0, 10, "Net present value of the investment:%3.2f EUR" % npv, fontsize=15)
+#calculate the project minimum yearly savings to be profitable
 if npv < 0: 
     minSavings=npf.pmt(discountRate,YearsOfOperation,InvestmentCost)
-    print("Project has a negative net present value, savings must be %3.2f per year to be profitable" % np.abs(minSavings))
+    ax.text(0, 8,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable" % np.abs(minSavings), fontsize=15)
+#calculate the project payback period
+ax.text(0, 6,"Return on the \n robotic investment requires: %3.2f years" % npf.nper(discountRate, -AnnualSavings, InvestmentCost), fontsize=15)
+plt.axis('off')
+
+# Plot the cash flows for the project
+plotDF = pd.DataFrame()
+plotDF['cashFlows'] = cashFlows
+plotDF['CFpos'] = plotDF['cashFlows'] > 0
+figFlow = plt.figure()
+ax = figFlow.add_subplot()
+plotDF['cashFlows'].plot(ax = ax, kind='bar',
+                              color=plotDF.CFpos.map({True: 'k', False: 'r'}))
+ax.set_xlabel("Operation Year")
+ax.set_ylabel("EUR")
+start, end = ax.get_ylim()
+ax.yaxis.set_ticks(np.arange(np.round(start/1000)*1000, np.round(end/1000)*1000, 5000))
+figFlow = plt.gcf()
+figFlow.set_figwidth(15)
+
+# Plot the fraction of the costs for the baseline and autonomous case
+figShare, (ax1,ax2) = plt.subplots(1,2,figsize=(14,6)) #ax1,ax2 refer to your two pies
+labels = ['VehiclePurchasePrice', 'CumulativeVehicleAnnualCost', 'VehicleEndOfLifeCost']
+costsBaseline = [VehiclePurchasePrice, VehicleAnnualCost*YearsOfOperation, VehicleEndOfLifeCost]
+ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
+ax1.set_title('Baseline (Human operator)')
+
+costsAGV = [NumberOfAGVs*AGVPurchasePrice, NumberOfAGVs*AGVAnnualCost*YearsOfOperation, NumberOfAGVs*AGVEndOfLifeCost]
+ax2.pie(costsAGV, labels=labels, autopct='%1.1f%%')
+ax2.set_title('Autonomous Ground Vehicle')
 
 
 # Sensitivity
 #TODO - add sensitivity analysis here
-print("Number of years to return on the robotic investment:%3.2f" % npf.nper(discountRate, -AnnualSavings, InvestmentCost))
 
 
 
 
 
-
-
-
-
-
-
+pp = PdfPages('AGVUseCaseModelResults.pdf')
+pp.savefig(figEcon)
+pp.savefig(figFlow)
+pp.savefig(figShare)
+pp.close()
 
 
 
