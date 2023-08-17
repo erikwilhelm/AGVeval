@@ -50,6 +50,7 @@ import numpy_financial as npf
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 plt.close('all')
+
 ## Assumptions
 # Financial
 discountRate = 0.05; # Five percent per annum
@@ -62,124 +63,215 @@ dataCarriage = 0.7 #EUR/MB
 # Lifecycle
 YearsOfOperation=7 #Years that the robotic system is in operation
 
+Assumptions={}
+Assumptions['discountRate']=discountRate
+Assumptions['electricityPrice']=electricityPrice
+Assumptions['dieselPrice']=dieselPrice
+Assumptions['dieselEnergy']=dieselEnergy
+Assumptions['dataCarriage']=dataCarriage
+Assumptions['YearsOfOperation']=YearsOfOperation
+
+#TODO - create baseline inputs, as well as worked examples cases - DON'T MAKE CHANGING TOO RIDID!!
 ## Inputs
 # Mission Inputs
-MissionLength=2 #km driven per misson round
-DailyMissions=15 #number of missions driven per day (TODO - calculate this from load factor)
-YearlyOperationDays = 212 #operating days per year (TODO - differentiate operating days for AGV vs human)
-
-#Operator driven vehicle use inputs
-VehicleAverageSpeed=20 #km/hr
-VehicleOperatingTime = MissionLength*DailyMissions/VehicleAverageSpeed #hr/day
-
+MissionLength=2 #km driven per misson round moving material
+MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A to B for the mission
+YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
 ## Operator driven vehicle use inputs
-# Human Cost inputs
-VehiclePurchasePrice=74000 #EUR
-# Energy
+VehicleAverageSpeed=12 #km/hr
+VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
+VehicleCost=74000 #EUR
 VehicleEnergyConsumption = 6.5 #L/100km
-VehicleEnergyCost= VehicleEnergyConsumption/100 * dieselPrice*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
-# Operator cost
-OperatorHourlyWage = 21 #EUR/hr
-VehicleOperatorCost = VehicleOperatingTime * OperatorHourlyWage * YearlyOperationDays #EUR/year
-
-VehicleAnnualOperationCost = VehicleEnergyCost+VehicleOperatorCost
-VehicleAnnualMaintenanceCost = 120 *12 #EUR/year
-VehicleAnnualCost = VehicleAnnualOperationCost + VehicleAnnualMaintenanceCost
-VehicleEndOfLifeCost=1800 #EUR
-
-## AGV cost inputs
-AGVPurchasePrice=115000 #EUR
-# Energy
-AGVEnergyConsumption=0.14 #kWh/km
-AGVEnegyCost=electricityPrice*AGVEnergyConsumption*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
-# Data Carriage
-AGVDataUse = 4 #MB/day
-AGVDataCost= dataCarriage*AGVDataUse*YearlyOperationDays #EUR/year
-# Human intervention (disengagements)
-AGVDisengagementPerKm = 0.01 #disengagements per driven km
-AGVDisengagementTime = 5 # minutes per disengagement
-AGVCostPerDisengagement = AGVDisengagementTime / 60 * OperatorHourlyWage
-AGVDisengagementCost = AGVDisengagementPerKm*AGVCostPerDisengagement*MissionLength*DailyMissions*YearlyOperationDays #EUR/year
-# Total costs
-AGVAnnualOperationCost = AGVEnegyCost+AGVDataCost+AGVDisengagementCost #EUR/year
-AGVAnnualMaintenanceCost = 200*12 #EUR/year
-AGVAnnualCost = AGVAnnualOperationCost + AGVAnnualMaintenanceCost
-AGVEndOfLifeCost=4000 #EUR
-
+OperatorHourlyWage = 51 #EUR/hr
+VehicleMaintenance = 120 #EUR/month
+VehicleEOLCost = 1800 # EUR for end of life disposal
 
 #AGV use inputs
-AGVAverageSpeed=6 #km/hr
-AGVChargeRate=3 #kW
+AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
+AGVChargeRate= 3 #kW
+AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+AGVEnergyConsumption = 0.14 #kWh/km
+AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
+AGVDataUse = 4 #MB/day
+AGVCost = 115000 #EUR/vehicle
+AGVDisengagementPerKm = 0.01 #disengagements per driven km
+AGVDisengagementTime = 5 # minutes per disengagement
+AGVMaintenance = 200 #EUR/month
+AGVEOLCost = 4000 # EUR for end of life disposal
 
-#Number of AGVs needed to replace a human driver
-NumberOfAGVs=1 #TODO - calculate from load factor
+#Structure Inputs and Assumptions
+Inputs={}
+Inputs['MissionLength']=MissionLength
+Inputs['MaterialToMove']=MaterialToMove
+Inputs['YearlyOperationDays']=YearlyOperationDays
+Vehicle={}
+Vehicle['VehicleAverageSpeed']=VehicleAverageSpeed
+Vehicle['VehicleMaterialCapacity']=VehicleMaterialCapacity
+Vehicle['VehicleMaxShiftLength']=VehicleMaxShiftLength
+Vehicle['VehicleCost']=VehicleCost
+Vehicle['VehicleEnergyConsumption']=VehicleEnergyConsumption
+Vehicle['OperatorHourlyWage']=OperatorHourlyWage
+Vehicle['VehicleMaintenance']=VehicleMaintenance
+Vehicle['VehicleEOLCost']=VehicleEOLCost
+Inputs['Vehicle']=Vehicle
+AGV={}
+AGV['AGVAverageSpeed']=AGVAverageSpeed
+AGV['AGVChargeRate']=AGVChargeRate
+AGV['AGVMaterialCapacity']=AGVMaterialCapacity
+AGV['AGVEnergyConsumption']=AGVEnergyConsumption
+AGV['AGVMaxShiftLength']=AGVMaxShiftLength
+AGV['AGVDataUse']=AGVDataUse
+AGV['AGVCost']=AGVCost
+AGV['AGVDisengagementPerKm']=AGVDisengagementPerKm
+AGV['AGVDisengagementTime']=AGVDisengagementTime
+AGV['AGVMaintenance']=AGVMaintenance
+AGV['AGVEOLCost']=AGVEOLCost
+Inputs['AGV']=AGV
 
-
-#Initial investment price
-InvestmentCost = VehiclePurchasePrice - NumberOfAGVs*AGVPurchasePrice # EUR
-
-AnnualSavings = VehicleAnnualCost - NumberOfAGVs*AGVAnnualCost # EUR/year
-
-EndOfLifePrice = VehicleEndOfLifeCost - NumberOfAGVs*AGVEndOfLifeCost # EUR
-
-# Establish cash flows
-cashFlows = [InvestmentCost]+ [AnnualSavings] * (YearsOfOperation-1) + [AnnualSavings + EndOfLifePrice] 
-
-## Outputs
-figEcon = plt.figure()
-ax = figEcon.add_subplot()
-ax.axis([0, 10, 0, 10])
-figEcon.subplots_adjust(top=0.85)
-#calculate the project net present value
-npv = npf.npv(discountRate, cashFlows)
-ax.text(0, 10, "Net present value of the investment:%3.2f EUR" % npv, fontsize=15)
-#calculate the project minimum yearly savings to be profitable
-if npv < 0: 
+def ModelAGVUseCase(Assumptions,Inputs):
+    ## HUMAN operated vehicle
+    # Vehicle mission running
+    VehicleDailyMissions=np.round(Inputs['MaterialToMove']/Inputs['Vehicle']['VehicleMaterialCapacity']) #number of missions driven per day
+    VehicleDailyDistance = Inputs['MissionLength'] * VehicleDailyMissions #km/day
+    VehicleDailyTime = VehicleDailyDistance/Inputs['Vehicle']['VehicleAverageSpeed'] #hr/day
+    NumberOfVehicles=np.ceil(VehicleDailyTime/Inputs['Vehicle']['VehicleMaxShiftLength']) #Number of Vehicles needed to acheive mission
+    # Human Cost inputs
+    VehiclePurchasePrice=NumberOfVehicles * Inputs['Vehicle']['VehicleCost'] #EUR
+    # Energy
+    VehicleEnergyCost= Inputs['Vehicle']['VehicleEnergyConsumption']/100 * Assumptions['dieselPrice'] * VehicleDailyDistance * Inputs['YearlyOperationDays'] #EUR/year
+    # Operator cost
+    VehicleOperatorCost = VehicleDailyTime * Inputs['Vehicle']['OperatorHourlyWage'] * Inputs['YearlyOperationDays'] #EUR/year
+    
+    VehicleAnnualOperationCost = VehicleEnergyCost+VehicleOperatorCost
+    VehicleAnnualMaintenanceCost = Inputs['Vehicle']['VehicleMaintenance'] *12 #EUR/year
+    VehicleAnnualCost = NumberOfVehicles * (VehicleAnnualOperationCost + VehicleAnnualMaintenanceCost)
+    VehicleEndOfLifeCost= NumberOfVehicles * Inputs['Vehicle']['VehicleEOLCost'] #EUR
+    
+    ## AGV 
+    # AGV missions
+    AGVDailyMissions = np.round(Inputs['MaterialToMove']/Inputs['AGV']['AGVMaterialCapacity']) #number of missions driven per day
+    AGVDailyDistance = Inputs['MissionLength'] * AGVDailyMissions #km/day
+    AGVDailyEnergy = AGVDailyDistance * Inputs['AGV']['AGVEnergyConsumption'] #kWh
+    AGVDailyTime = AGVDailyDistance/Inputs['AGV']['AGVAverageSpeed'] + AGVDailyEnergy/Inputs['AGV']['AGVChargeRate'] #hours required by the AGV to acheive its mission
+    #Number of AGVs needed to acheive mission
+    NumberOfAGVs=np.ceil(AGVDailyTime/Inputs['AGV']['AGVMaxShiftLength'])
+    
+    ## AGV cost inputs
+    AGVPurchasePrice = NumberOfAGVs * Inputs['AGV']['AGVCost'] #EUR
+    # Energy
+    AGVEnegyCost = Assumptions['electricityPrice'] * Inputs['AGV']['AGVEnergyConsumption'] * AGVDailyDistance * Inputs['YearlyOperationDays'] #EUR/year
+    # Data Carriage
+    AGVDataCost = Assumptions['dataCarriage'] * Inputs['AGV']['AGVDataUse'] * Inputs['YearlyOperationDays'] #EUR/year
+    # Human intervention (disengagements)
+    AGVCostPerDisengagement = Inputs['AGV']['AGVDisengagementTime'] / 60 * Inputs['Vehicle']['OperatorHourlyWage']
+    AGVDisengagementCost = Inputs['AGV']['AGVDisengagementPerKm'] * AGVCostPerDisengagement * AGVDailyDistance * Inputs['YearlyOperationDays'] #EUR/year
+    # Total costs
+    AGVAnnualOperationCost = AGVEnegyCost + AGVDataCost + AGVDisengagementCost #EUR/year
+    AGVAnnualMaintenanceCost = Inputs['AGV']['AGVMaintenance'] * 12 #EUR/year
+    AGVAnnualCost = NumberOfAGVs * (AGVAnnualOperationCost + AGVAnnualMaintenanceCost)
+    AGVEndOfLifeCost= NumberOfAGVs * Inputs['AGV']['AGVEOLCost'] #EUR
+    
+    
+    #Initial investment price
+    InvestmentCost = VehiclePurchasePrice - AGVPurchasePrice # EUR
+    
+    AnnualSavings = VehicleAnnualCost - AGVAnnualCost # EUR/year
+    
+    EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost # EUR
+    
+    # Establish cash flows
+    cashFlows = [InvestmentCost]+ [AnnualSavings] * (YearsOfOperation-1) + [AnnualSavings + EndOfLifePrice] 
+    
+    ## Return outputs
+    #calculate the project net present value
+    npv = npf.npv(discountRate, cashFlows)
+    #calculate the project minimum yearly savings to be profitable
     minSavings=npf.pmt(discountRate,YearsOfOperation,InvestmentCost)
-    ax.text(0, 8,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable" % np.abs(minSavings), fontsize=15)
-#calculate the project payback period
-ax.text(0, 6,"Return on the \n robotic investment requires: %3.2f years" % npf.nper(discountRate, -AnnualSavings, InvestmentCost), fontsize=15)
-plt.axis('off')
-
-# Plot the cash flows for the project
-plotDF = pd.DataFrame()
-plotDF['cashFlows'] = cashFlows
-plotDF['CFpos'] = plotDF['cashFlows'] > 0
-figFlow = plt.figure()
-ax = figFlow.add_subplot()
-plotDF['cashFlows'].plot(ax = ax, kind='bar',
-                              color=plotDF.CFpos.map({True: 'k', False: 'r'}))
-ax.set_xlabel("Operation Year")
-ax.set_ylabel("EUR")
-start, end = ax.get_ylim()
-ax.yaxis.set_ticks(np.arange(np.round(start/1000)*1000, np.round(end/1000)*1000, 5000))
-figFlow = plt.gcf()
-figFlow.set_figwidth(15)
-
-# Plot the fraction of the costs for the baseline and autonomous case
-figShare, (ax1,ax2) = plt.subplots(1,2,figsize=(14,6)) #ax1,ax2 refer to your two pies
-labels = ['VehiclePurchasePrice', 'CumulativeVehicleAnnualCost', 'VehicleEndOfLifeCost']
-costsBaseline = [VehiclePurchasePrice, VehicleAnnualCost*YearsOfOperation, VehicleEndOfLifeCost]
-ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
-ax1.set_title('Baseline (Human operator)')
-
-costsAGV = [NumberOfAGVs*AGVPurchasePrice, NumberOfAGVs*AGVAnnualCost*YearsOfOperation, NumberOfAGVs*AGVEndOfLifeCost]
-ax2.pie(costsAGV, labels=labels, autopct='%1.1f%%')
-ax2.set_title('Autonomous Ground Vehicle')
+    #calculate the project payback period
+    nper=npf.nper(discountRate, AnnualSavings, InvestmentCost)
+    
+    outputs={}
+    outputs['AnnualSavings'] = AnnualSavings
+    outputs['CumulativeVehicleAnnualCost'] = VehicleAnnualOperationCost * Assumptions['YearsOfOperation']
+    outputs['CumulativeAGVAnnualCost'] = AGVAnnualOperationCost * Assumptions['YearsOfOperation']
+    outputs['cashFlows'] = cashFlows
+    outputs['npv'] = npv
+    outputs['minSavings'] = minSavings
+    outputs['nper'] = nper
+    return outputs
 
 
-# Sensitivity
+def PlotCaseResults(Assumptions,Inputs,outputs):
+    #plots the basic use case model outputs
+    figEcon = plt.figure()
+    ax = figEcon.add_subplot()
+    ax.axis([0, 10, 0, 10])
+    figEcon.subplots_adjust(top=0.85)
+    
+    ax.text(0, 10, "Net present value of the investment:%3.2f EUR" % outputs['npv'], fontsize=15)
+    
+    if outputs['npv'] < 0: 
+        ax.text(0, 7,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
+    
+    ax.text(0, 5,"Return on the \n robotic investment requires: %3.2f years" % outputs['nper'], fontsize=15)
+    plt.axis('off')
+    
+    # Plot the cash flows for the project
+    plotDF = pd.DataFrame()
+    plotDF['cashFlows'] = outputs['cashFlows']
+    plotDF['CFpos'] = plotDF['cashFlows'] > 0
+    figFlow = plt.figure()
+    ax = figFlow.add_subplot()
+    plotDF['cashFlows'].plot(ax = ax, kind='bar',
+                                  color=plotDF.CFpos.map({True: 'k', False: 'r'}))
+    ax.set_xlabel("Operation Year")
+    ax.set_ylabel("EUR")
+    start, end = ax.get_ylim()
+    ax.yaxis.set_ticks(np.arange(np.round(start/1000)*1000, np.round(end/1000)*1000, 5000))
+    figFlow = plt.gcf()
+    figFlow.set_figwidth(15)
+    
+    # Plot the fraction of the costs for the baseline and autonomous case
+    figShare, (ax1,ax2) = plt.subplots(1,2,figsize=(14,6)) #ax1,ax2 refer to your two pies
+    labels = ['VehiclePurchasePrice', 'CumulativeVehicleAnnualCost', 'VehicleEndOfLifeCost']
+    
+    costsBaseline = [Inputs['Vehicle']['VehicleCost'], outputs['CumulativeVehicleAnnualCost'], Inputs['Vehicle']['VehicleEOLCost']]
+    ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
+    ax1.set_title('Baseline (Human operator)')
+    costsAGV = [Inputs['AGV']['AGVCost'], outputs['CumulativeAGVAnnualCost'], Inputs['AGV']['AGVEOLCost']]
+    ax2.pie(costsAGV, labels=labels, autopct='%1.1f%%')
+    ax2.set_title('Autonomous Ground Vehicle')
+    figs=[figEcon,figFlow,figShare]
+    return figs
+    
+
+def SenstivityAnalysis(key,Assumptions,Inputs):
+    #performs a sensitivity analysis on the variable in the dict 'key' in either the assumptions or inputs dict
+    if key in Assumptions:
+        var=Assumptions[key]
+    elif key in Inputs:
+        var=Inputs[key]
+    else:
+        raise Exception('Key not found, check input and assumption variable names')
+    
+    
+#Calculate with baseline
+outputs=ModelAGVUseCase(Assumptions,Inputs)
+## Plot the baseline results
+figs=PlotCaseResults(Assumptions,Inputs,outputs)
+# Save results
+pp = PdfPages('AGVUseCaseModelResults.pdf')
+pp.savefig(figs[0])
+pp.savefig(figs[1])
+pp.savefig(figs[2])
+pp.close()
+
+
+# Sensitivity analysis
 #TODO - add sensitivity analysis here
 
 
-
-
-
-pp = PdfPages('AGVUseCaseModelResults.pdf')
-pp.savefig(figEcon)
-pp.savefig(figFlow)
-pp.savefig(figShare)
-pp.close()
 
 
 
