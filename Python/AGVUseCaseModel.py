@@ -294,11 +294,20 @@ def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
         elif key in Inputs['AGV']:
             Inputs['AGV'][key] = origKey * (1+perc)
             valVec.append(Inputs['AGV'][key])
-        else:
-            raise Exception('Key not found, check input and assumption variable names')
+
         outputs=ModelAGVUseCase(Assumptions,Inputs)
         npvVec.append(outputs['npv'])
         minMaxVals=[min(valVec),max(valVec)]
+
+    if key in Assumptions:
+        Assumptions[key] = origKey
+    elif key in Inputs:
+        Inputs[key] = origKey
+    elif key in Inputs['Vehicle']:
+        Inputs['Vehicle'][key] = origKey
+    elif key in Inputs['AGV']:
+        Inputs['AGV'][key] = origKey
+        
     return minMaxVec,minMaxVals,npvVec
     
 #Calculate with baseline
