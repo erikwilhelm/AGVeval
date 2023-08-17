@@ -50,6 +50,7 @@ import numpy_financial as npf
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 plt.close('all')
+plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
 
 ## Assumptions
 # Financial
@@ -130,6 +131,10 @@ AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
 
 def ModelAGVUseCase(Assumptions,Inputs):
+    #Sanity check input assumptions
+    Inputs['YearlyOperationDays']=np.clip(Inputs['YearlyOperationDays'],1,365)
+    Assumptions['dieselEnergy']=np.clip(Assumptions['dieselEnergy'],0.95,0.97)
+    
     ## HUMAN operated vehicle
     # Vehicle mission running
     VehicleDailyMissions=np.round(Inputs['MaterialToMove']/Inputs['Vehicle']['VehicleMaterialCapacity']) #number of missions driven per day
@@ -209,12 +214,14 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
     ax.axis([0, 10, 0, 10])
     figEcon.subplots_adjust(top=0.85)
     
-    ax.text(0, 10, "Net present value of the investment:%3.2f EUR" % outputs['npv'], fontsize=15)
+    ax.text(0, 10, "Baseline Model Results", fontsize=15)
+    
+    ax.text(0, 7, "Net present value of the investment:%3.2f EUR" % outputs['npv'], fontsize=15)
     
     if outputs['npv'] < 0: 
-        ax.text(0, 7,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
+        ax.text(0, 5,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
     
-    ax.text(0, 5,"Return on the \n robotic investment requires: %3.2f years" % outputs['nper'], fontsize=15)
+    ax.text(0, 3,"Return on the \n robotic investment requires: %3.2f years" % outputs['nper'], fontsize=15)
     plt.axis('off')
     
     # Plot the cash flows for the project
@@ -227,6 +234,7 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
                                   color=plotDF.CFpos.map({True: 'k', False: 'r'}))
     ax.set_xlabel("Operation Year")
     ax.set_ylabel("EUR")
+    ax.set_title("Project Cash Flows")
     start, end = ax.get_ylim()
     ax.yaxis.set_ticks(np.arange(np.round(start/1000)*1000, np.round(end/1000)*1000, 5000))
     figFlow = plt.gcf()
@@ -238,38 +246,99 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
     
     costsBaseline = [Inputs['Vehicle']['VehicleCost'], outputs['CumulativeVehicleAnnualCost'], Inputs['Vehicle']['VehicleEOLCost']]
     ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
-    ax1.set_title('Baseline (Human operator)')
+    ax1.set_title('Baseline (Human operator) Lifetime Cost Share')
     costsAGV = [Inputs['AGV']['AGVCost'], outputs['CumulativeAGVAnnualCost'], Inputs['AGV']['AGVEOLCost']]
     ax2.pie(costsAGV, labels=labels, autopct='%1.1f%%')
-    ax2.set_title('Autonomous Ground Vehicle')
+    ax2.set_title('Autonomous Ground Vehicle Lifetime Costs Share')
     figs=[figEcon,figFlow,figShare]
     return figs
     
 
-def SenstivityAnalysis(key,Assumptions,Inputs):
+def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
     #performs a sensitivity analysis on the variable in the dict 'key' in either the assumptions or inputs dict
+    #Inputs: 
+    # key - the name of the dictionary key in the inputs and assumptinos for which the analysis is performed
+    # minMaxPerc - scalar value of the minimum / maximum percent to vary the key
+    # numLevels - the discretization of the analysis
+    # Assumptions - dictionary of assumptions to be tested
+    # Inputs - dictionary of the inputs to be tested
+    #Outputs:
+    # minMaxVec - vector of minMax percentages based on the inputs
+    # npvVec - vector of npv calculated across the range specified by minMaxPerc
+    
+    npvVec = []
+    valVec= []
+    minMaxVec = np.linspace(-minMaxPerc,minMaxPerc,numLevels)/100 # build the sensitivity range
+    minMaxVec = np.insert(minMaxVec,int(numLevels/2),0)
     if key in Assumptions:
-        var=Assumptions[key]
+        origKey = Assumptions[key] 
     elif key in Inputs:
-        var=Inputs[key]
+        origKey = Inputs[key] 
+    elif key in Inputs['Vehicle']:
+        origKey = Inputs['Vehicle'][key]
+    elif key in Inputs['AGV']:
+        origKey = Inputs['AGV'][key]
     else:
         raise Exception('Key not found, check input and assumption variable names')
-    
+
+    for perc in minMaxVec: #iterate all inputs
+        if key in Assumptions:
+            Assumptions[key] = origKey * (1+perc)
+            valVec.append(Assumptions[key])
+        elif key in Inputs:
+            Inputs[key] = origKey * (1+perc)
+            valVec.append(Inputs[key])
+        elif key in Inputs['Vehicle']:
+            Inputs['Vehicle'][key] = origKey * (1+perc)
+            valVec.append(Inputs['Vehicle'][key])
+        elif key in Inputs['AGV']:
+            Inputs['AGV'][key] = origKey * (1+perc)
+            valVec.append(Inputs['AGV'][key])
+        else:
+            raise Exception('Key not found, check input and assumption variable names')
+        outputs=ModelAGVUseCase(Assumptions,Inputs)
+        npvVec.append(outputs['npv'])
+        minMaxVals=[min(valVec),max(valVec)]
+    return minMaxVec,minMaxVals,npvVec
     
 #Calculate with baseline
 outputs=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the baseline results
 figs=PlotCaseResults(Assumptions,Inputs,outputs)
+
+# Sensitivity analysis
+npvVectors=[]
+minMaxVectors=[]
+figSense = plt.figure(figsize=(14,14))
+ax = figSense.add_subplot()
+
+allkeys=[]
+allkeys=allkeys+list(Assumptions.keys())
+allkeys=allkeys+list(Inputs['Vehicle'].keys())
+allkeys=allkeys+list(Inputs['AGV'].keys())
+allkeys=allkeys+['MissionLength','MaterialToMove','YearlyOperationDays']
+
+for key in allkeys:
+    minMaxVec,minMaxVals,npvVec=SenstivityAnalysis(key,90,30,Assumptions,Inputs)
+    npvVectors.append(npvVec)
+    minMaxVectors.append(minMaxVals)
+    ax.plot(minMaxVec*100,npvVec,label=key+'from %.2f to %.2f' % (minMaxVals[0],minMaxVals[1]))
+
+ax.legend()
+ax.set_title('Sensitivity to % Change from Baseline')
+ax.set_xlabel("% Change from Baseline")
+ax.set_ylabel("EUR")
+    
+    
 # Save results
 pp = PdfPages('AGVUseCaseModelResults.pdf')
 pp.savefig(figs[0])
 pp.savefig(figs[1])
 pp.savefig(figs[2])
+pp.savefig(figSense)
 pp.close()
 
 
-# Sensitivity analysis
-#TODO - add sensitivity analysis here
 
 
 
