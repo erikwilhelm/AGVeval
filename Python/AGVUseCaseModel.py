@@ -54,7 +54,7 @@ plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
 
 ## Assumptions
 # Financial
-discountRate = 0.05; # Five percent per annum
+discountRate = 0.05  # Five percent per annum
 # Energy
 electricityPrice = 0.23 # EUR/kWh
 dieselPrice = 1.79 #EUR/L
