@@ -72,13 +72,21 @@ Assumptions['dieselEnergy']=dieselEnergy
 Assumptions['dataCarriage']=dataCarriage
 Assumptions['YearsOfOperation']=YearsOfOperation
 
-#TODO - create baseline inputs, as well as worked examples cases - DON'T MAKE CHANGING TOO RIDID!!
-## Inputs
-# Mission Inputs
+
+"""
+BASELINE Inputs 
+
+For the baseline case, we reach assumptinos resulting in an almost-zero Net
+Present Value for a project replacing a human-driven vehicle with an autonomous 
+version.
+
+"""
+#  BASELINE Mission Inputs
 MissionLength=2 #km driven per misson round moving material
 MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A to B for the mission
 YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
-## Operator driven vehicle use inputs
+
+##  BASELINE Operator driven vehicle use inputs
 VehicleAverageSpeed=12 #km/hr
 VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
@@ -86,9 +94,9 @@ VehicleCost=74000 #EUR
 VehicleEnergyConsumption = 6.5 #L/100km
 OperatorHourlyWage = 51 #EUR/hr
 VehicleMaintenance = 120 #EUR/month
-VehicleEOLCost = 1800 # EUR for end of life disposal
+VehicleEOLCost = 1800 #EUR for end of life disposal
 
-#AGV use inputs
+##  BASELINE AGV use inputs
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
 AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
@@ -97,9 +105,9 @@ AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional pena
 AGVDataUse = 4 #MB/day
 AGVCost = 115000 #EUR/vehicle
 AGVDisengagementPerKm = 0.01 #disengagements per driven km
-AGVDisengagementTime = 5 # minutes per disengagement
+AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaintenance = 200 #EUR/month
-AGVEOLCost = 4000 # EUR for end of life disposal
+AGVEOLCost = 4000 #EUR for end of life disposal
 
 #Structure Inputs and Assumptions
 Inputs={}
@@ -312,12 +320,15 @@ def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
     
 #Calculate with baseline
 outputs=ModelAGVUseCase(Assumptions,Inputs)
+
 ## Plot the baseline results
 figs=PlotCaseResults(Assumptions,Inputs,outputs)
 
 # Sensitivity analysis
 npvVectors=[]
 minMaxVectors=[]
+minMaxPercent = 50 # the maximum and minimum percentage to consider
+numLevels = 30 #the number of levels of discretization to consider
 figSense = plt.figure(figsize=(14,14))
 ax = figSense.add_subplot()
 
@@ -327,18 +338,37 @@ allkeys=allkeys+list(Inputs['Vehicle'].keys())
 allkeys=allkeys+list(Inputs['AGV'].keys())
 allkeys=allkeys+['MissionLength','MaterialToMove','YearlyOperationDays']
 
+df_slope = pd.DataFrame(columns=['slope'])
+
 for key in allkeys:
-    minMaxVec,minMaxVals,npvVec=SenstivityAnalysis(key,90,30,Assumptions,Inputs)
+    minMaxVec,minMaxVals,npvVec=SenstivityAnalysis(key,minMaxPercent,numLevels,Assumptions,Inputs)
     npvVectors.append(npvVec)
     minMaxVectors.append(minMaxVals)
     ax.plot(minMaxVec*100,npvVec,label=key+'from %.2f to %.2f' % (minMaxVals[0],minMaxVals[1]))
+    plt.text(minMaxVec[-1]*100, npvVec[-1], key)
+    df_slope.at[key,'slope']=(npvVec[-1]-npvVec[0])/2*minMaxPercent
 
-ax.legend()
+
+
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          fancybox=True, shadow=True, ncol=5)
 ax.set_title('Sensitivity to % Change from Baseline')
 ax.set_xlabel("% Change from Baseline")
 ax.set_ylabel("EUR")
-    
-    
+
+#Slope table
+df_slope['abs_slope']=np.abs(df_slope['slope'])
+df_slope.sort_values('abs_slope', inplace=True,ascending=False)
+
+figSlope = plt.figure(figsize=(7,7))
+ax = figSlope.add_subplot()
+ax.axis('off')
+table = pd.plotting.table(ax, df_slope, loc='center',
+                          cellLoc='center', colWidths=list([.2, .2]))
+
 # Save results
 pp = PdfPages('AGVUseCaseModelResults.pdf')
 pp.savefig(figs[0])
