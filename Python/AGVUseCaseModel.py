@@ -251,7 +251,6 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
     # Plot the fraction of the costs for the baseline and autonomous case
     figShare, (ax1,ax2) = plt.subplots(1,2,figsize=(14,6)) #ax1,ax2 refer to your two pies
     labels = ['VehiclePurchasePrice', 'CumulativeVehicleAnnualCost', 'VehicleEndOfLifeCost']
-    
     costsBaseline = [Inputs['Vehicle']['VehicleCost'], outputs['CumulativeVehicleAnnualCost'], Inputs['Vehicle']['VehicleEOLCost']]
     ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
     ax1.set_title('Baseline (Human operator) Lifetime Cost Share')
@@ -324,6 +323,8 @@ outputs=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the baseline results
 figs=PlotCaseResults(Assumptions,Inputs,outputs)
 
+#TODO - run other cases and plot results here
+
 # Sensitivity analysis
 npvVectors=[]
 minMaxVectors=[]
@@ -346,7 +347,7 @@ for key in allkeys:
     minMaxVectors.append(minMaxVals)
     ax.plot(minMaxVec*100,npvVec,label=key+'from %.2f to %.2f' % (minMaxVals[0],minMaxVals[1]))
     plt.text(minMaxVec[-1]*100, npvVec[-1], key)
-    df_slope.at[key,'slope']=(npvVec[-1]-npvVec[0])/2*minMaxPercent
+    df_slope.at[key,'slope']=np.round((npvVec[-1]-npvVec[0])/2*minMaxPercent,2)
 
 
 
@@ -362,12 +363,14 @@ ax.set_ylabel("EUR")
 #Slope table
 df_slope['abs_slope']=np.abs(df_slope['slope'])
 df_slope.sort_values('abs_slope', inplace=True,ascending=False)
+df_slope['rank']=np.linspace(1,len(df_slope),len(df_slope))
+df_slope.drop(columns=['abs_slope'], inplace=True)
 
-figSlope = plt.figure(figsize=(7,7))
+figSlope = plt.figure(figsize=(12,12))
 ax = figSlope.add_subplot()
 ax.axis('off')
-table = pd.plotting.table(ax, df_slope, loc='center',
-                          cellLoc='center', colWidths=list([.2, .2]))
+table = pd.plotting.table(ax, df_slope.head(10).round(2), loc='center',
+                          cellLoc='center', colWidths=list([.3, .3]))
 
 # Save results
 pp = PdfPages('AGVUseCaseModelResults.pdf')
