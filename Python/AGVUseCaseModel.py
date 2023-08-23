@@ -63,6 +63,8 @@ dieselEnergy = 9.6 # kWh/L
 dataCarriage = 0.7 #EUR/MB
 # Lifecycle
 YearsOfOperation=7 #Years that the robotic system is in operation
+# Technology Readiness
+TechnologyReadiness = 5
 
 Assumptions={}
 Assumptions['discountRate']=discountRate
@@ -71,7 +73,7 @@ Assumptions['dieselPrice']=dieselPrice
 Assumptions['dieselEnergy']=dieselEnergy
 Assumptions['dataCarriage']=dataCarriage
 Assumptions['YearsOfOperation']=YearsOfOperation
-
+Assumptions['TechnologyReadiness']=TechnologyReadiness
 
 """
 BASELINE Inputs 
@@ -174,7 +176,9 @@ AGV['AGVMaintenance']=AGVMaintenance
 AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
 
-def ModelAGVMission(MissionLength,MaterialToMove,AGVMaterialCapacity):
+
+
+def ModelAGVMission(Assumptions,Inputs):
     """This function enables the modeling of AGV speed and disengagement rates
     to enable accurate project costs and therefore profitability
     Inputs:
@@ -190,6 +194,8 @@ def ModelAGVMission(MissionLength,MaterialToMove,AGVMaterialCapacity):
         The driving assumptions which guide this model are:
         TechnologyReadiness= maturity of the company producing the vehicles,
         which results in an estimation of the disengagements per km
+        See:  https://github.com/erikwilhelm/AGVeval/blob/main/Excel/AGVUseCaseModel.xlsx 
+        (TAB: TechMaturity)
         CompanyAcceptance= nature of the automated task - allowing an estimation
         of how much the human workers will collaborate and assist the robots mission
         MissionSimilarity= how similar are the tasks the robot runs, enabling it 
@@ -198,7 +204,12 @@ def ModelAGVMission(MissionLength,MaterialToMove,AGVMaterialCapacity):
         (how busy is the overall environment) which indicates how difficult 
         the task will be for a robot
     """
-
+    AverageSpeed=3 #km/hr
+    TimePerDisengagement=5
+    ##Disengagements depend on technology readiness, scaled by mission determinism and company acceptance
+    DisengagementsPerKm = 5.133 * np.exp(-1.083*Assumptions['TechnologyReadiness'])
+    
+    return AverageSpeed,DisengagementsPerKm,TimePerDisengagement
 
 
 
