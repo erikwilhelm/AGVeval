@@ -121,7 +121,7 @@ MissionLength=2 #km driven per misson round moving material
 MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A to B for the mission
 YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
 
-##  CURRENT Operator driven vehicle use inputs
+#  CURRENT Operator driven vehicle use inputs
 VehicleAverageSpeed=12 #km/hr
 VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
@@ -131,7 +131,7 @@ OperatorHourlyWage = 51 #EUR/hr
 VehicleMaintenance = 120 #EUR/month
 VehicleEOLCost = 1800 #EUR for end of life disposal
 
-##  CURRENT AGV use inputs
+#  CURRENT AGV use inputs
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
 AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
@@ -145,7 +145,7 @@ AGVMaintenance = 200 #EUR/month
 AGVEOLCost = 4000 #EUR for end of life disposal
 ########### INSERT END ############
 
-#Structure Inputs and Assumptions
+### Structure Inputs and Assumptions
 Inputs={}
 Inputs['MissionLength']=MissionLength
 Inputs['MaterialToMove']=MaterialToMove
@@ -173,6 +173,34 @@ AGV['AGVDisengagementTime']=AGVDisengagementTime
 AGV['AGVMaintenance']=AGVMaintenance
 AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
+
+def ModelAGVMission(MissionLength,MaterialToMove,AGVMaterialCapacity):
+    """This function enables the modeling of AGV speed and disengagement rates
+    to enable accurate project costs and therefore profitability
+    Inputs:
+        MissionLength= distance traveled in one round
+        MaterialToMove= amount of material required to be moved per round
+        AGVMaterialCapacity= amount of material capable of being moved
+    Outputs:
+        AverageSpeed= Average speed of one round, based on driving assumptions
+        DisengagementsPerKm= Estimated number of disengagements per km
+        TimePerDisengagement= Amount of time spent per disengagement
+    
+    Assumptions:
+        The driving assumptions which guide this model are:
+        TechnologyReadiness= maturity of the company producing the vehicles,
+        which results in an estimation of the disengagements per km
+        CompanyAcceptance= nature of the automated task - allowing an estimation
+        of how much the human workers will collaborate and assist the robots mission
+        MissionSimilarity= how similar are the tasks the robot runs, enabling it 
+        to operate more rapidly
+        MissionDeterminism=  how many stochastic elements are in the environment 
+        (how busy is the overall environment) which indicates how difficult 
+        the task will be for a robot
+    """
+
+
+
 
 def ModelAGVUseCase(Assumptions,Inputs):
     #Sanity check input assumptions
