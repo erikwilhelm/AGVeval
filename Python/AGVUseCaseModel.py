@@ -72,13 +72,24 @@ Assumptions['dieselEnergy']=dieselEnergy
 Assumptions['dataCarriage']=dataCarriage
 Assumptions['YearsOfOperation']=YearsOfOperation
 
-#TODO - create baseline inputs, as well as worked examples cases - DON'T MAKE CHANGING TOO RIDID!!
-## Inputs
-# Mission Inputs
+
+"""
+BASELINE Inputs 
+
+For the baseline case, we reach assumptinos resulting in an almost-zero Net
+Present Value for a project replacing a human-driven vehicle with an autonomous 
+version.
+
+To Select these inputs, copy ALL text between "COPY START" and "COPY END" to
+the "INSERT START" and "INSERT END" block
+
+########### COPY START ############
+#  CURRENT Mission Inputs
 MissionLength=2 #km driven per misson round moving material
 MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A to B for the mission
 YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
-## Operator driven vehicle use inputs
+
+##  CURRENT Operator driven vehicle use inputs
 VehicleAverageSpeed=12 #km/hr
 VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
@@ -86,9 +97,9 @@ VehicleCost=74000 #EUR
 VehicleEnergyConsumption = 6.5 #L/100km
 OperatorHourlyWage = 51 #EUR/hr
 VehicleMaintenance = 120 #EUR/month
-VehicleEOLCost = 1800 # EUR for end of life disposal
+VehicleEOLCost = 1800 #EUR for end of life disposal
 
-#AGV use inputs
+##  CURRENT AGV use inputs
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
 AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
@@ -97,11 +108,44 @@ AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional pena
 AGVDataUse = 4 #MB/day
 AGVCost = 115000 #EUR/vehicle
 AGVDisengagementPerKm = 0.01 #disengagements per driven km
-AGVDisengagementTime = 5 # minutes per disengagement
+AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaintenance = 200 #EUR/month
-AGVEOLCost = 4000 # EUR for end of life disposal
+AGVEOLCost = 4000 #EUR for end of life disposal
+########### COPY END ############
 
-#Structure Inputs and Assumptions
+"""
+
+########### INSERT START ############
+#  CURRENT Mission Inputs
+MissionLength=2 #km driven per misson round moving material
+MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A to B for the mission
+YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
+
+#  CURRENT Operator driven vehicle use inputs
+VehicleAverageSpeed=12 #km/hr
+VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
+VehicleCost=74000 #EUR
+VehicleEnergyConsumption = 6.5 #L/100km
+OperatorHourlyWage = 51 #EUR/hr
+VehicleMaintenance = 120 #EUR/month
+VehicleEOLCost = 1800 #EUR for end of life disposal
+
+#  CURRENT AGV use inputs
+AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
+AGVChargeRate= 3 #kW
+AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+AGVEnergyConsumption = 0.14 #kWh/km
+AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
+AGVDataUse = 4 #MB/day
+AGVCost = 115000 #EUR/vehicle
+AGVDisengagementPerKm = 0.01 #disengagements per driven km
+AGVDisengagementTime = 5 #minutes per disengagement
+AGVMaintenance = 200 #EUR/month
+AGVEOLCost = 4000 #EUR for end of life disposal
+########### INSERT END ############
+
+### Structure Inputs and Assumptions
 Inputs={}
 Inputs['MissionLength']=MissionLength
 Inputs['MaterialToMove']=MaterialToMove
@@ -130,10 +174,38 @@ AGV['AGVMaintenance']=AGVMaintenance
 AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
 
+def ModelAGVMission(MissionLength,MaterialToMove,AGVMaterialCapacity):
+    """This function enables the modeling of AGV speed and disengagement rates
+    to enable accurate project costs and therefore profitability
+    Inputs:
+        MissionLength= distance traveled in one round
+        MaterialToMove= amount of material required to be moved per round
+        AGVMaterialCapacity= amount of material capable of being moved
+    Outputs:
+        AverageSpeed= Average speed of one round, based on driving assumptions
+        DisengagementsPerKm= Estimated number of disengagements per km
+        TimePerDisengagement= Amount of time spent per disengagement
+    
+    Assumptions:
+        The driving assumptions which guide this model are:
+        TechnologyReadiness= maturity of the company producing the vehicles,
+        which results in an estimation of the disengagements per km
+        CompanyAcceptance= nature of the automated task - allowing an estimation
+        of how much the human workers will collaborate and assist the robots mission
+        MissionSimilarity= how similar are the tasks the robot runs, enabling it 
+        to operate more rapidly
+        MissionDeterminism=  how many stochastic elements are in the environment 
+        (how busy is the overall environment) which indicates how difficult 
+        the task will be for a robot
+    """
+
+
+
+
 def ModelAGVUseCase(Assumptions,Inputs):
     #Sanity check input assumptions
-    Inputs['YearlyOperationDays']=np.clip(Inputs['YearlyOperationDays'],1,365)
-    Assumptions['dieselEnergy']=np.clip(Assumptions['dieselEnergy'],0.95,0.97)
+    Inputs['YearlyOperationDays']=np.clip(Inputs['YearlyOperationDays'],1,365) #restrict operation days to the max days in a year
+    Assumptions['dieselEnergy']=np.clip(Assumptions['dieselEnergy'],0.95,0.97) #restrict diesel energy to the max energy available
     
     ## HUMAN operated vehicle
     # Vehicle mission running
@@ -207,22 +279,27 @@ def ModelAGVUseCase(Assumptions,Inputs):
     return outputs
 
 
-def PlotCaseResults(Assumptions,Inputs,outputs):
+def PlotCaseResults(Assumptions,Inputs,outputs,CaseName):
     #plots the basic use case model outputs
-    figEcon = plt.figure()
-    ax = figEcon.add_subplot()
-    ax.axis([0, 10, 0, 10])
+    figEcon,axes = plt.subplots(2,figsize=(10, 10))
+    ax = axes[0]
+    
     figEcon.subplots_adjust(top=0.85)
-    
-    ax.text(0, 10, "Baseline Model Results", fontsize=15)
-    
-    ax.text(0, 7, "Net present value of the investment:%3.2f EUR" % outputs['npv'], fontsize=15)
+    BaselineTotal=Inputs['Vehicle']['VehicleCost']+outputs['CumulativeVehicleAnnualCost']+Inputs['Vehicle']['VehicleEOLCost']
+    AGVTotal=Inputs['AGV']['AGVCost']+outputs['CumulativeAGVAnnualCost']+Inputs['AGV']['AGVEOLCost']
+    totalCosts=[BaselineTotal,AGVTotal]
+    ax.bar(['Vehicle','AGV'],totalCosts)
+    ax.set_title('%s Comparison of Undiscounted Lifetime costs' % CaseName)
+    ax.set_ylabel('CHF Lifetime Cost (no discounting)')
+    ax2=axes[1]
+    ax2.axis([0, 12, 0, 12])
+    ax2.text(0,10, "%s Discounted net present value of the investment: %3.2f EUR" % (CaseName,outputs['npv']), fontsize=15)
     
     if outputs['npv'] < 0: 
-        ax.text(0, 5,"Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
+        ax2.text(0,7,"%s Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (CaseName, np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
     
-    ax.text(0, 3,"Return on the \n robotic investment requires: %3.2f years" % outputs['nper'], fontsize=15)
-    plt.axis('off')
+    ax2.text(0,3,"%s Return on the robotic investment requires: %3.2f years" % (CaseName,outputs['nper']), fontsize=15)
+    ax2.axis('off')
     
     # Plot the cash flows for the project
     plotDF = pd.DataFrame()
@@ -234,7 +311,7 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
                                   color=plotDF.CFpos.map({True: 'k', False: 'r'}))
     ax.set_xlabel("Operation Year")
     ax.set_ylabel("EUR")
-    ax.set_title("Project Cash Flows")
+    ax.set_title("%s Project Cash Flows" % CaseName)
     start, end = ax.get_ylim()
     ax.yaxis.set_ticks(np.arange(np.round(start/1000)*1000, np.round(end/1000)*1000, 5000))
     figFlow = plt.gcf()
@@ -243,13 +320,12 @@ def PlotCaseResults(Assumptions,Inputs,outputs):
     # Plot the fraction of the costs for the baseline and autonomous case
     figShare, (ax1,ax2) = plt.subplots(1,2,figsize=(14,6)) #ax1,ax2 refer to your two pies
     labels = ['VehiclePurchasePrice', 'CumulativeVehicleAnnualCost', 'VehicleEndOfLifeCost']
-    
     costsBaseline = [Inputs['Vehicle']['VehicleCost'], outputs['CumulativeVehicleAnnualCost'], Inputs['Vehicle']['VehicleEOLCost']]
     ax1.pie(costsBaseline, labels=labels, autopct='%1.1f%%')
-    ax1.set_title('Baseline (Human operator) Lifetime Cost Share')
+    ax1.set_title('%s Baseline (Human operator) Lifetime Cost Share' % CaseName)
     costsAGV = [Inputs['AGV']['AGVCost'], outputs['CumulativeAGVAnnualCost'], Inputs['AGV']['AGVEOLCost']]
     ax2.pie(costsAGV, labels=labels, autopct='%1.1f%%')
-    ax2.set_title('Autonomous Ground Vehicle Lifetime Costs Share')
+    ax2.set_title('%s Autonomous Ground Vehicle Lifetime Costs Share' % CaseName)
     figs=[figEcon,figFlow,figShare]
     return figs
     
@@ -309,42 +385,94 @@ def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
         Inputs['AGV'][key] = origKey
         
     return minMaxVec,minMaxVals,npvVec
-    
-#Calculate with baseline
+
+
+##### MAIN CODE SECTION #####
+#BASELINE calculation
 outputs=ModelAGVUseCase(Assumptions,Inputs)
-## Plot the baseline results
-figs=PlotCaseResults(Assumptions,Inputs,outputs)
+## Plot the BASELINE results
+figs=PlotCaseResults(Assumptions,Inputs,outputs,'BASELINE')
+
+#CHEAPER AGV calculation
+Inputs['AGV']['AGVCost'] = 0.75 * Inputs['AGV']['AGVCost'] #reduced AGV cost
+outputsCheaper=ModelAGVUseCase(Assumptions,Inputs)
+## Plot the CHEAPER AGV results
+figsCheaper=PlotCaseResults(Assumptions,Inputs,outputsCheaper,'CHEAPER AGV')
+Inputs['AGV']['AGVCost'] =  Inputs['AGV']['AGVCost'] / 0.75  #return AGV cost to original value
+
+#SLOW VEHICLE calculation
+Inputs['Vehicle']['VehicleAverageSpeed'] = 0.25 * Inputs['Vehicle']['VehicleAverageSpeed']
+outputsSlower=ModelAGVUseCase(Assumptions,Inputs)
+## Plot the SLOW VEHICLE results
+figsSlower=PlotCaseResults(Assumptions,Inputs,outputsSlower,'SLOW VEHICLE')
+Inputs['Vehicle']['VehicleAverageSpeed'] = Inputs['Vehicle']['VehicleAverageSpeed']/0.25 #return vehicle speed back to original value
 
 # Sensitivity analysis
 npvVectors=[]
 minMaxVectors=[]
+minMaxPercent = 50 # the maximum and minimum percentage to consider
+numLevels = 30 #the number of levels of discretization to consider
 figSense = plt.figure(figsize=(14,14))
 ax = figSense.add_subplot()
 
+#Generate all keys list
 allkeys=[]
 allkeys=allkeys+list(Assumptions.keys())
 allkeys=allkeys+list(Inputs['Vehicle'].keys())
 allkeys=allkeys+list(Inputs['AGV'].keys())
 allkeys=allkeys+['MissionLength','MaterialToMove','YearlyOperationDays']
 
+df_slope = pd.DataFrame(columns=['slope'])
+
+#Iterate through all keys to perform the sensitivitiy analysis
 for key in allkeys:
-    minMaxVec,minMaxVals,npvVec=SenstivityAnalysis(key,90,30,Assumptions,Inputs)
+    minMaxVec,minMaxVals,npvVec=SenstivityAnalysis(key,minMaxPercent,numLevels,Assumptions,Inputs)
     npvVectors.append(npvVec)
     minMaxVectors.append(minMaxVals)
     ax.plot(minMaxVec*100,npvVec,label=key+'from %.2f to %.2f' % (minMaxVals[0],minMaxVals[1]))
+    plt.text(minMaxVec[-1]*100, npvVec[-1], key)
+    df_slope.at[key,'slope']=np.round((npvVec[-1]-npvVec[0])/2*minMaxPercent,2)
 
-ax.legend()
+
+#Plot Sensitivity graph
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          fancybox=True, shadow=True, ncol=5)
 ax.set_title('Sensitivity to % Change from Baseline')
 ax.set_xlabel("% Change from Baseline")
 ax.set_ylabel("EUR")
-    
-    
+
+#Slope table
+df_slope['abs_slope']=np.abs(df_slope['slope'])
+df_slope.sort_values('abs_slope', inplace=True,ascending=False)
+df_slope['rank']=np.linspace(1,len(df_slope),len(df_slope))
+df_slope.drop(columns=['abs_slope'], inplace=True)
+
+figSlope = plt.figure(figsize=(12,12))
+ax = figSlope.add_subplot()
+ax.axis('off')
+table = pd.plotting.table(ax, df_slope.head(10).round(2), loc='center',
+                          cellLoc='center', colWidths=list([.3, .3]))
+ax.set_title('Ranking of most sensitive parameters and their slopes')
+
 # Save results
 pp = PdfPages('AGVUseCaseModelResults.pdf')
 pp.savefig(figs[0])
 pp.savefig(figs[1])
 pp.savefig(figs[2])
 pp.savefig(figSense)
+pp.savefig(figSlope)
+#can add additional modified cases here
+#CHEAPER AGV
+pp.savefig(figsCheaper[0])
+pp.savefig(figsCheaper[1])
+pp.savefig(figsCheaper[2])
+#SLOW VEHICLE
+pp.savefig(figsSlower[0])
+pp.savefig(figsSlower[1])
+pp.savefig(figsSlower[2])
 pp.close()
 
 
