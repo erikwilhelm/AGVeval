@@ -453,7 +453,7 @@ ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
           fancybox=True, shadow=True, ncol=5)
 ax.set_title('Sensitivity to % Change from Baseline')
 ax.set_xlabel("% Change from Baseline")
-ax.set_ylabel("EUR")
+ax.set_ylabel("NPV (EUR)")
 
 #Slope table
 df_slope['abs_slope']=np.abs(df_slope['slope'])
