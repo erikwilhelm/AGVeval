@@ -65,6 +65,12 @@ dataCarriage = 0.7 #EUR/MB
 YearsOfOperation=7 #Years that the robotic system is in operation
 # Technology Readiness
 TechnologyReadiness = 5
+# Company Acceptance
+CompanyAcceptance = 0.7
+# Mission Similarity
+MissionSimilarity = 0.8
+# Mission Determinism
+MissionDeterminism = 0.6
 
 Assumptions={}
 Assumptions['discountRate']=discountRate
@@ -74,6 +80,10 @@ Assumptions['dieselEnergy']=dieselEnergy
 Assumptions['dataCarriage']=dataCarriage
 Assumptions['YearsOfOperation']=YearsOfOperation
 Assumptions['TechnologyReadiness']=TechnologyReadiness
+Assumptions['CompanyAcceptance']=CompanyAcceptance
+Assumptions['MissionSimilarity']=MissionSimilarity
+Assumptions['MissionDeterminism']=MissionDeterminism
+
 
 """
 BASELINE Inputs 
@@ -177,7 +187,6 @@ AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
 
 
-
 def ModelAGVMission(Assumptions,Inputs):
     """This function enables the modeling of AGV speed and disengagement rates
     to enable accurate project costs and therefore profitability
@@ -193,7 +202,7 @@ def ModelAGVMission(Assumptions,Inputs):
     Assumptions:
         The driving assumptions which guide this model are:
         TechnologyReadiness= maturity of the company producing the vehicles,
-        which results in an estimation of the disengagements per km
+        which results in an estimation of the disengagements per km, and minutes 
         See:  https://github.com/erikwilhelm/AGVeval/blob/main/Excel/AGVUseCaseModel.xlsx 
         (TAB: TechMaturity)
         CompanyAcceptance= nature of the automated task - allowing an estimation
@@ -204,10 +213,19 @@ def ModelAGVMission(Assumptions,Inputs):
         (how busy is the overall environment) which indicates how difficult 
         the task will be for a robot
     """
-    AverageSpeed=3 #km/hr
-    TimePerDisengagement=5
+    #Sanity check input assumptions
+    Assumptions['CompanyAcceptance']=np.clip(Assumptions['CompanyAcceptance'],0.1,1) #restrict company acceptance between 0.1 and 1
+    Assumptions['MissionSimilarity']=np.clip(Assumptions['MissionSimilarity'],0.1,1) #restrict mission similarity between 0.1 and 1
+    Assumptions['MissionDeterminism']=np.clip(Assumptions['MissionDeterminism'],0.1,1) #restrict mission determinism between 0.1 and 1
+    AverageSpeed= 0.5 * 0.7544 * np.exp(0.517*Assumptions['TechnologyReadiness']) * Assumptions['MissionSimilarity'] * Assumptions['MissionDeterminism'] #km/hr - average speed is half of the max speed, scaled by mission similarity and determinism
+    TimePerDisengagement=243.16 * np.exp(-0.679*Assumptions['TechnologyReadiness']) #minutes
     ##Disengagements depend on technology readiness, scaled by mission determinism and company acceptance
-    DisengagementsPerKm = 5.133 * np.exp(-1.083*Assumptions['TechnologyReadiness'])
+    DisengagementsPerKm = 5.133 * np.exp(-1.083*Assumptions['TechnologyReadiness']) / Assumptions['CompanyAcceptance'] / Assumptions['MissionDeterminism'] #disengagements/km
+    
+    #Sanity check outputs
+    AverageSpeed=np.clip(AverageSpeed,0.5,64) #km/hr
+    DisengagementsPerKm=np.clip(DisengagementsPerKm,0.0008,2) #km/hr
+    TimePerDisengagement=np.clip(TimePerDisengagement,0.5,120) #minutes
     
     return AverageSpeed,DisengagementsPerKm,TimePerDisengagement
 
@@ -399,26 +417,26 @@ def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
 
 
 ##### MAIN CODE SECTION #####
-#BASELINE calculation
+##### BASELINE calculation
 outputs=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the BASELINE results
 figs=PlotCaseResults(Assumptions,Inputs,outputs,'BASELINE')
 
-#CHEAPER AGV calculation
+##### CHEAPER AGV calculation
 Inputs['AGV']['AGVCost'] = 0.75 * Inputs['AGV']['AGVCost'] #reduced AGV cost
 outputsCheaper=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the CHEAPER AGV results
 figsCheaper=PlotCaseResults(Assumptions,Inputs,outputsCheaper,'CHEAPER AGV')
 Inputs['AGV']['AGVCost'] =  Inputs['AGV']['AGVCost'] / 0.75  #return AGV cost to original value
 
-#SLOW VEHICLE calculation
+###### SLOW VEHICLE calculation
 Inputs['Vehicle']['VehicleAverageSpeed'] = 0.25 * Inputs['Vehicle']['VehicleAverageSpeed']
 outputsSlower=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the SLOW VEHICLE results
 figsSlower=PlotCaseResults(Assumptions,Inputs,outputsSlower,'SLOW VEHICLE')
 Inputs['Vehicle']['VehicleAverageSpeed'] = Inputs['Vehicle']['VehicleAverageSpeed']/0.25 #return vehicle speed back to original value
 
-# Sensitivity analysis
+######## Sensitivity analysis
 npvVectors=[]
 minMaxVectors=[]
 minMaxPercent = 50 # the maximum and minimum percentage to consider
@@ -432,6 +450,11 @@ allkeys=allkeys+list(Assumptions.keys())
 allkeys=allkeys+list(Inputs['Vehicle'].keys())
 allkeys=allkeys+list(Inputs['AGV'].keys())
 allkeys=allkeys+['MissionLength','MaterialToMove','YearlyOperationDays']
+allkeys.remove('dieselEnergy') #no need to handle sensitivity here
+allkeys.remove('TechnologyReadiness') # is treated in a later sensitivity analysis
+allkeys.remove('CompanyAcceptance') # is treated in a later sensitivity analysis
+allkeys.remove('MissionSimilarity') # is treated in a later sensitivity analysis
+allkeys.remove('MissionDeterminism') # is treated in a later sensitivity analysis
 
 df_slope = pd.DataFrame(columns=['slope'])
 
@@ -467,6 +490,61 @@ ax.axis('off')
 table = pd.plotting.table(ax, df_slope.head(10).round(2), loc='center',
                           cellLoc='center', colWidths=list([.3, .3]))
 ax.set_title('Ranking of most sensitive parameters and their slopes')
+
+
+########## Mission analysis 
+
+minMaxPerc = 50 # the maximum and minimum percentage to consider
+numLevels = 30 #the number of levels of discretization to consider
+minMaxVec = np.linspace(-minMaxPerc,minMaxPerc,numLevels)/100 # build the sensitivity range
+minMaxVec = np.insert(minMaxVec,int(numLevels/2),0)
+figMissionSense = plt.figure(figsize=(14,14))
+ax = figMissionSense.add_subplot()
+#Generate all keys list
+MissionKeys=['TechnologyReadiness','CompanyAcceptance','MissionSimilarity','MissionDeterminism']
+
+for key in MissionKeys:
+    origVal=Assumptions[key]
+    npvVectorsMission=[]
+    speedVecMission=[]
+    disTimeMission=[]
+    disPerKmMission=[]
+    for perc in minMaxVec:
+        Assumptions[key]=Assumptions[key]*perc
+        ModAverageSpeed,ModDisengagementsPerKm,ModTimePerDisengagement= ModelAGVMission(Assumptions,Inputs)
+        origSpeed=Inputs['AGV']['AGVAverageSpeed']
+        origDisengagements=Inputs['AGV']['AGVDisengagementPerKm']
+        origTimePerDisengagement=Inputs['AGV']['AGVDisengagementTime']
+        Inputs['AGV']['AGVAverageSpeed']=ModAverageSpeed
+        Inputs['AGV']['AGVDisengagementPerKm']=ModDisengagementsPerKm
+        Inputs['AGV']['AGVDisengagementTime']=ModTimePerDisengagement
+        print(ModAverageSpeed)
+        print(ModDisengagementsPerKm)
+        print(ModTimePerDisengagement)
+        outputsMission=ModelAGVUseCase(Assumptions,Inputs)
+        npvVectorsMission.append(outputsMission['npv'])
+        speedVecMission.append(ModAverageSpeed)
+        disTimeMission.append(ModDisengagementsPerKm)
+        disPerKmMission.append(ModTimePerDisengagement)
+        Inputs['AGV']['AGVAverageSpeed']=origSpeed
+        Inputs['AGV']['AGVDisengagementPerKm']=origDisengagements
+        Inputs['AGV']['AGVDisengagementTime']=origTimePerDisengagement
+        Assumptions[key]=origVal
+        # ax.plot(minMaxVec*100,npvVectorsMission,label=key+'from %.2f to %.2f' % (minMaxVec[0]*Assumptions[key],minMaxVals[-1]*Assumptions[key]))
+    ax.plot(minMaxVec*100,npvVectorsMission,label=key+'from %.2f to %.2f' % (minMaxVec[0]*Assumptions[key],minMaxVals[-1]*Assumptions[key]))
+    npvVectorsMission=[]
+    speedVecMission=[]
+    disTimeMission=[]
+    disPerKmMission=[]
+    
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+          fancybox=True, shadow=True, ncol=5)
+ax.set_title('Sensitivity to % Change from Baseline')
+ax.set_xlabel("% Change from Baseline")
+ax.set_ylabel("NPV (EUR)")
 
 # Save results
 pp = PdfPages('AGVUseCaseModelResults.pdf')
