@@ -224,7 +224,7 @@ def ModelAGVMission(Assumptions,Inputs):
     
     #Sanity check outputs
     AverageSpeed=np.clip(AverageSpeed,0.5,64) #km/hr
-    DisengagementsPerKm=np.clip(DisengagementsPerKm,0.0008,2) #km/hr
+    DisengagementsPerKm=np.clip(DisengagementsPerKm,0.0008,2) # dis./km
     TimePerDisengagement=np.clip(TimePerDisengagement,0.5,120) #minutes
     
     return AverageSpeed,DisengagementsPerKm,TimePerDisengagement
@@ -418,9 +418,9 @@ def SenstivityAnalysis(key,minMaxPerc,numLevels,Assumptions,Inputs):
 
 ##### MAIN CODE SECTION #####
 ##### BASELINE calculation
-outputs=ModelAGVUseCase(Assumptions,Inputs)
+outputsBaseline=ModelAGVUseCase(Assumptions,Inputs)
 ## Plot the BASELINE results
-figs=PlotCaseResults(Assumptions,Inputs,outputs,'BASELINE')
+figs=PlotCaseResults(Assumptions,Inputs,outputsBaseline,'BASELINE')
 
 ##### CHEAPER AGV calculation
 Inputs['AGV']['AGVCost'] = 0.75 * Inputs['AGV']['AGVCost'] #reduced AGV cost
@@ -495,7 +495,7 @@ ax.set_title('Ranking of most sensitive parameters and their slopes')
 ########## Mission analysis 
 
 minMaxVec = np.linspace(0.1,1,10) # build the sensitivity range
-figMissionSense = plt.figure(figsize=(14,14))
+figMissionSense = plt.figure(figsize=(22,14))
 ax = figMissionSense.add_subplot()
 #Generate all keys list
 MissionKeys=['TechnologyReadiness','CompanyAcceptance','MissionSimilarity','MissionDeterminism']
@@ -505,6 +505,9 @@ figModelMission, axsModel = plt.subplots(2, 2,figsize=(14,14))
 
 for key in MissionKeys:
     origVal=Assumptions[key]
+    origSpeed=Inputs['AGV']['AGVAverageSpeed']
+    origDisengagements=Inputs['AGV']['AGVDisengagementPerKm']
+    origTimePerDisengagement=Inputs['AGV']['AGVDisengagementTime']
     npvVectorsMission=[]
     speedVecMission=[]
     disTimeMission=[]
@@ -516,30 +519,30 @@ for key in MissionKeys:
             Assumptions[key]=Assumptions[key]*10
         minMaxKey.append(Assumptions[key])
         ModAverageSpeed,ModDisengagementsPerKm,ModTimePerDisengagement= ModelAGVMission(Assumptions,Inputs)
-        origSpeed=Inputs['AGV']['AGVAverageSpeed']
-        origDisengagements=Inputs['AGV']['AGVDisengagementPerKm']
-        origTimePerDisengagement=Inputs['AGV']['AGVDisengagementTime']
         Inputs['AGV']['AGVAverageSpeed']=ModAverageSpeed
         Inputs['AGV']['AGVDisengagementPerKm']=ModDisengagementsPerKm
         Inputs['AGV']['AGVDisengagementTime']=ModTimePerDisengagement
         outputsMission=ModelAGVUseCase(Assumptions,Inputs)
         npvVectorsMission.append(outputsMission['npv'])
         speedVecMission.append(ModAverageSpeed)
-        disTimeMission.append(ModDisengagementsPerKm)
-        disPerKmMission.append(ModTimePerDisengagement)
-        Inputs['AGV']['AGVAverageSpeed']=origSpeed
-        Inputs['AGV']['AGVDisengagementPerKm']=origDisengagements
-        Inputs['AGV']['AGVDisengagementTime']=origTimePerDisengagement
+        disTimeMission.append(ModTimePerDisengagement)
+        disPerKmMission.append(ModDisengagementsPerKm)
+        Inputs['AGV']['AGVAverageSpeed']=origSpeed #return the value to its original value
+        Inputs['AGV']['AGVDisengagementPerKm']=origDisengagements #return the value to its original value
+        Inputs['AGV']['AGVDisengagementTime']=origTimePerDisengagement #return the value to its original value
         Assumptions[key]=origVal #return the value to its original value
     axsModel[0, 0].plot(minMaxVec, speedVecMission)
+    axsModel[0, 0].plot(minMaxVec, origSpeed*np.ones([len(minMaxVec)]),'k--')
     axsModel[0, 0].set_title('Ave. Speed')
     axsModel[0, 0].set_xlabel('Level')
     axsModel[0, 0].set_ylabel('km/hr')
     axsModel[0, 1].plot(minMaxVec, disTimeMission)
+    axsModel[0, 1].plot(minMaxVec, origTimePerDisengagement*np.ones([len(minMaxVec)]),'k--')
     axsModel[0, 1].set_title('Dis. Time')
     axsModel[0, 1].set_xlabel('Level')
     axsModel[0, 1].set_ylabel('min')
     axsModel[1, 0].plot(minMaxVec, disPerKmMission)
+    axsModel[1, 0].plot(minMaxVec, origDisengagements*np.ones([len(minMaxVec)]),'k--')
     axsModel[1, 0].set_title('Dis./km')
     axsModel[1, 0].set_xlabel('Level')
     axsModel[1, 0].set_ylabel('Number')
@@ -549,8 +552,8 @@ for key in MissionKeys:
         
     ax.plot(minMaxVec,npvVectorsMission,label=key+' from %.2f to %.2f' % (minMaxKey[0],minMaxKey[-1]))
 
-
-
+axsModel[1, 1].plot(minMaxVec, np.zeros([len(minMaxVec)]),label='Baseline')
+ax.plot(minMaxVec,outputsBaseline['npv']*np.ones([len(minMaxVec)]),'k--',label='Baseline') #add the baseline case for reference
 box = ax.get_position()
 ax.set_position([box.x0, box.y0 + box.height * 0.1,
                  box.width, box.height * 0.9])
@@ -576,6 +579,9 @@ pp.savefig(figsCheaper[2])
 pp.savefig(figsSlower[0])
 pp.savefig(figsSlower[1])
 pp.savefig(figsSlower[2])
+
+pp.savefig(figModelMission)
+pp.savefig(figMissionSense)
 pp.close()
 
 
