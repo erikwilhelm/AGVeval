@@ -46,6 +46,7 @@ manpower needs? In other words, where can human resources be more effectively al
 # Imports
 import numpy as np
 import pandas as pd
+import warnings
 import numpy_financial as npf
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
@@ -118,7 +119,8 @@ AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved fr
 AGVEnergyConsumption = 0.14 #kWh/km
 AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
 AGVDataUse = 4 #MB/day
-AGVCost = 115000 #EUR/vehicle
+AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
 AGVDisengagementPerKm = 0.01 #disengagements per driven km
 AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaintenance = 200 #EUR/month
@@ -150,7 +152,8 @@ AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved fr
 AGVEnergyConsumption = 0.14 #kWh/km
 AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
 AGVDataUse = 4 #MB/day
-AGVCost = 115000 #EUR/vehicle
+AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
 AGVDisengagementPerKm = 0.01 #disengagements per driven km
 AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaintenance = 200 #EUR/month
@@ -180,6 +183,7 @@ AGV['AGVEnergyConsumption']=AGVEnergyConsumption
 AGV['AGVMaxShiftLength']=AGVMaxShiftLength
 AGV['AGVDataUse']=AGVDataUse
 AGV['AGVCost']=AGVCost
+AGV['AGVLeasing']=AGVLeasing
 AGV['AGVDisengagementPerKm']=AGVDisengagementPerKm
 AGV['AGVDisengagementTime']=AGVDisengagementTime
 AGV['AGVMaintenance']=AGVMaintenance
@@ -265,6 +269,9 @@ def ModelAGVUseCase(Assumptions,Inputs):
     
     ## AGV cost inputs
     AGVPurchasePrice = NumberOfAGVs * Inputs['AGV']['AGVCost'] #EUR
+    AGVLeasingPrice = NumberOfAGVs * Inputs['AGV']['AGVLeasing'] #EUR
+    if AGVPurchasePrice>0 and AGVLeasingPrice>0:
+        warnings.warn("Warning: AGV purchase and leasing price are both set, only one should be set")
     # Energy
     AGVEnegyCost = Assumptions['electricityPrice'] * Inputs['AGV']['AGVEnergyConsumption'] * AGVDailyDistance * Inputs['YearlyOperationDays'] #EUR/year
     # Data Carriage
@@ -275,12 +282,15 @@ def ModelAGVUseCase(Assumptions,Inputs):
     # Total costs
     AGVAnnualOperationCost = AGVEnegyCost + AGVDataCost + AGVDisengagementCost #EUR/year
     AGVAnnualMaintenanceCost = Inputs['AGV']['AGVMaintenance'] * 12 #EUR/year
-    AGVAnnualCost = NumberOfAGVs * (AGVAnnualOperationCost + AGVAnnualMaintenanceCost)
+    AGVAnnualCost = NumberOfAGVs * (AGVAnnualOperationCost + AGVAnnualMaintenanceCost) + AGVLeasingPrice
     AGVEndOfLifeCost= NumberOfAGVs * Inputs['AGV']['AGVEOLCost'] #EUR
     
     
     #Initial investment price
-    InvestmentCost = VehiclePurchasePrice - AGVPurchasePrice # EUR
+    if VehiclePurchasePrice<AGVPurchasePrice:
+        InvestmentCost = VehiclePurchasePrice - AGVPurchasePrice # EUR
+    else:
+        InvestmentCost = 0 # EUR Handles the case where AGVs are leased, and therefore not part of the overall cost
     
     AnnualSavings = VehicleAnnualCost - AGVAnnualCost # EUR/year
     
