@@ -65,13 +65,13 @@ dataCarriage = 0.7 #EUR/MB
 # Lifecycle
 YearsOfOperation=7 #Years that the robotic system is in operation
 # Technology Readiness
-TechnologyReadiness = 5
+TechnologyReadiness = 5 #Technology validated in relevant environment (industrially relevant environment in the case of key enabling technologies)
 # Company Acceptance
-CompanyAcceptance = 0.7
+CompanyAcceptance = 0.7 #represents a 'good' level of AGV acceptance within a company
 # Mission Similarity
-MissionSimilarity = 0.8
+MissionSimilarity = 0.8 #represents an 'excellent' level of mission similarity
 # Mission Determinism
-MissionDeterminism = 0.6
+MissionDeterminism = 0.6 #represents a 'sufficient' level of mission determinism
 
 Assumptions={}
 Assumptions['discountRate']=discountRate
@@ -103,14 +103,15 @@ MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A
 YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
 
 ##  CURRENT Operator driven vehicle use inputs
-VehicleAverageSpeed=12 #km/hr
-VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
-VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
+
 VehicleCost=74000 #EUR
 VehicleEnergyConsumption = 6.5 #L/100km
 OperatorHourlyWage = 51 #EUR/hr
 VehicleMaintenance = 120 #EUR/month
 VehicleEOLCost = 1800 #EUR for end of life disposal
+VehicleAverageSpeed=12 #km/hr
+VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
 
 ##  CURRENT AGV use inputs
 AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
@@ -136,14 +137,15 @@ MaterialToMove=200 #amount of material (kg, m^3 etc) required to be moved from A
 YearlyOperationDays = 212 #operating days per year. Note: differentiate availability for AGV vs human using max shift length
 
 #  CURRENT Operator driven vehicle use inputs
-VehicleAverageSpeed=12 #km/hr
-VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
-VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
+
 VehicleCost=74000 #EUR
 VehicleEnergyConsumption = 6.5 #L/100km
 OperatorHourlyWage = 51 #EUR/hr
 VehicleMaintenance = 120 #EUR/month
 VehicleEOLCost = 1800 #EUR for end of life disposal
+VehicleAverageSpeed=12 #km/hr
+VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
 
 #  CURRENT AGV use inputs
 AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
@@ -176,18 +178,19 @@ Vehicle['VehicleMaintenance']=VehicleMaintenance
 Vehicle['VehicleEOLCost']=VehicleEOLCost
 Inputs['Vehicle']=Vehicle
 AGV={}
+
+AGV['AGVCost']=AGVCost
+AGV['AGVLeasing']=AGVLeasing
+AGV['AGVMaintenance']=AGVMaintenance
+AGV['AGVEOLCost']=AGVEOLCost
 AGV['AGVAverageSpeed']=AGVAverageSpeed
 AGV['AGVChargeRate']=AGVChargeRate
+AGV['AGVDisengagementPerKm']=AGVDisengagementPerKm
+AGV['AGVDisengagementTime']=AGVDisengagementTime
 AGV['AGVMaterialCapacity']=AGVMaterialCapacity
 AGV['AGVEnergyConsumption']=AGVEnergyConsumption
 AGV['AGVMaxShiftLength']=AGVMaxShiftLength
 AGV['AGVDataUse']=AGVDataUse
-AGV['AGVCost']=AGVCost
-AGV['AGVLeasing']=AGVLeasing
-AGV['AGVDisengagementPerKm']=AGVDisengagementPerKm
-AGV['AGVDisengagementTime']=AGVDisengagementTime
-AGV['AGVMaintenance']=AGVMaintenance
-AGV['AGVEOLCost']=AGVEOLCost
 Inputs['AGV']=AGV
 
 
@@ -211,11 +214,17 @@ def ModelAGVMission(Assumptions,Inputs):
         (TAB: TechMaturity)
         CompanyAcceptance= nature of the automated task - allowing an estimation
         of how much the human workers will collaborate and assist the robots mission
+        See:  https://github.com/erikwilhelm/AGVeval/blob/main/Excel/AGVUseCaseModel.xlsx 
+        (TAB: MissionModel)
         MissionSimilarity= how similar are the tasks the robot runs, enabling it 
         to operate more rapidly
+        See:  https://github.com/erikwilhelm/AGVeval/blob/main/Excel/AGVUseCaseModel.xlsx 
+        (TAB: MissionModel)
         MissionDeterminism=  how many stochastic elements are in the environment 
         (how busy is the overall environment) which indicates how difficult 
         the task will be for a robot
+        See:  https://github.com/erikwilhelm/AGVeval/blob/main/Excel/AGVUseCaseModel.xlsx 
+        (TAB: MissionModel)
     """
     #Sanity check input assumptions
     Assumptions['CompanyAcceptance']=np.clip(Assumptions['CompanyAcceptance'],0.1,1) #restrict company acceptance between 0.1 and 1
@@ -315,6 +324,7 @@ def ModelAGVUseCase(Assumptions,Inputs):
     outputs['npv'] = npv
     outputs['minSavings'] = minSavings
     outputs['nper'] = nper
+    outputs['numRobots'] = NumberOfAGVs
     return outputs
 
 
@@ -336,6 +346,8 @@ def PlotCaseResults(Assumptions,Inputs,outputs,CaseName):
     
     if outputs['npv'] < 0: 
         ax2.text(0,7,"%s Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year" % (CaseName, np.abs(outputs['minSavings']),outputs['AnnualSavings']), fontsize=15)
+    
+    ax2.text(0,5, "%s Number of robots to match human performance: %d units" % (CaseName,outputs['numRobots']), fontsize=15)
     
     ax2.text(0,3,"%s Return on the robotic investment requires: %3.2f years" % (CaseName,outputs['nper']), fontsize=15)
     ax2.axis('off')
