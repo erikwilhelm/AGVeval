@@ -113,18 +113,18 @@ VehicleMaintenance = 120 #EUR/month
 VehicleEOLCost = 1800 #EUR for end of life disposal
 
 ##  CURRENT AGV use inputs
+AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
+AGVMaintenance = 200 #EUR/month
+AGVEOLCost = 4000 #EUR for end of life disposal
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
+AGVDisengagementPerKm = 0.01 #disengagements per driven km
+AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 AGVEnergyConsumption = 0.14 #kWh/km
 AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
 AGVDataUse = 4 #MB/day
-AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
-AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
-AGVDisengagementPerKm = 0.01 #disengagements per driven km
-AGVDisengagementTime = 5 #minutes per disengagement
-AGVMaintenance = 200 #EUR/month
-AGVEOLCost = 4000 #EUR for end of life disposal
 ########### COPY END ############
 
 """
@@ -146,18 +146,18 @@ VehicleMaintenance = 120 #EUR/month
 VehicleEOLCost = 1800 #EUR for end of life disposal
 
 #  CURRENT AGV use inputs
+AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
+AGVMaintenance = 200 #EUR/month
+AGVEOLCost = 4000 #EUR for end of life disposal
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
+AGVDisengagementPerKm = 0.01 #disengagements per driven km
+AGVDisengagementTime = 5 #minutes per disengagement
 AGVMaterialCapacity = 20 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 AGVEnergyConsumption = 0.14 #kWh/km
 AGVMaxShiftLength = 24 #if the AGV is unable to operate 24/7, an additional penalty can be added here
 AGVDataUse = 4 #MB/day
-AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
-AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
-AGVDisengagementPerKm = 0.01 #disengagements per driven km
-AGVDisengagementTime = 5 #minutes per disengagement
-AGVMaintenance = 200 #EUR/month
-AGVEOLCost = 4000 #EUR for end of life disposal
 ########### INSERT END ############
 
 ### Structure Inputs and Assumptions
