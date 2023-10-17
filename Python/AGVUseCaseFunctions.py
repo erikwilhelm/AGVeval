@@ -164,7 +164,8 @@ def ModelAGVUseCase(Assumptions,Inputs):
     EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost # EUR
     
     # Establish cash flows
-    cashFlows = [InvestmentCost]+ AnnualSavings * (Assumptions['YearsOfOperation']-1) + [AnnualSavings + EndOfLifePrice] 
+    
+    cashFlows = [InvestmentCost]+ [AnnualSavings] * (int(Assumptions['YearsOfOperation'])-1) + [AnnualSavings + EndOfLifePrice] 
 
     ## Return outputs
     #calculate the project net present value

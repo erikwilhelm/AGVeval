@@ -222,7 +222,7 @@ npvVectors=[]
 minMaxVectors=[]
 minMaxPercent = 50 # the maximum and minimum percentage to consider
 numLevels = 30 #the number of levels of discretization to consider
-figSense = plt.figure(figsize=(14,14))
+figSense = plt.figure(figsize=(18,14))
 ax = figSense.add_subplot()
 
 #Generate all keys list
