@@ -109,7 +109,7 @@ def ModelAGVUseCase(Assumptions,Inputs):
     
     ## HUMAN operated vehicle
     # Vehicle mission running
-    VehicleDailyMissions=np.round(Inputs['MaterialToMove']/Inputs['Vehicle']['VehicleMaterialCapacity']) #number of missions driven per day
+    VehicleDailyMissions=np.ceil(Inputs['MaterialToMove']/Inputs['Vehicle']['VehicleMaterialCapacity']) #number of missions driven per day
     VehicleDailyDistance = Inputs['MissionLength'] * VehicleDailyMissions #km/day
     VehicleDailyTime = VehicleDailyDistance/Inputs['Vehicle']['VehicleAverageSpeed'] #hr/day
     NumberOfVehicles=np.ceil(VehicleDailyTime/Inputs['Vehicle']['VehicleMaxShiftLength']) #Number of Vehicles needed to acheive mission
@@ -127,7 +127,7 @@ def ModelAGVUseCase(Assumptions,Inputs):
     
     ## AGV 
     # AGV missions
-    AGVDailyMissions = np.round(Inputs['MaterialToMove']/Inputs['AGV']['AGVMaterialCapacity']) #number of missions driven per day
+    AGVDailyMissions = np.ceil(Inputs['MaterialToMove']/Inputs['AGV']['AGVMaterialCapacity']) #number of missions driven per day
     AGVDailyDistance = Inputs['MissionLength'] * AGVDailyMissions #km/day
     AGVDailyEnergy = AGVDailyDistance * Inputs['AGV']['AGVEnergyConsumption'] #kWh
     AGVDailyTime = AGVDailyDistance/Inputs['AGV']['AGVAverageSpeed'] + AGVDailyEnergy/Inputs['AGV']['AGVChargeRate'] #hours required by the AGV to acheive its mission
