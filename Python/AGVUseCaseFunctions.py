@@ -44,7 +44,7 @@ manpower needs? In other words, where can human resources be more effectively al
 """
 
 # Imports
-from typing import Any
+from typing import Any, Union
 from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
@@ -119,7 +119,7 @@ class Output:
     annual_savings: float
     cumulative_vehicle_annual_cost: float
     cumulative_agv_annual_cost: float
-    cash_flows: list[float | int]
+    cash_flows: list[Union[float, int]]
     npv: float
     min_savings: np.ndarray[Any, Any]
     nper: np.ndarray[Any, Any]
