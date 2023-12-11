@@ -44,6 +44,7 @@ manpower needs? In other words, where can human resources be more effectively al
 """
 
 # Imports
+from typing import List
 import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
@@ -242,7 +243,7 @@ figSense = plt.figure(figsize=(18, 14))
 ax = figSense.add_subplot()
 
 # Generate all keys list
-allkeys: list[str] = []
+allkeys: List[str] = []
 allkeys = allkeys + list(map(lambda x: x.name, fields(assumptions)))
 allkeys = allkeys + list(map(lambda x: x.name, fields(inputs.vehicle)))
 allkeys = allkeys + list(map(lambda x: x.name, fields(inputs.agv)))

@@ -44,7 +44,7 @@ manpower needs? In other words, where can human resources be more effectively al
 """
 
 # Imports
-from typing import Any, Union
+from typing import Any, List, Tuple, Union
 from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
@@ -119,7 +119,7 @@ class Output:
     annual_savings: float
     cumulative_vehicle_annual_cost: float
     cumulative_agv_annual_cost: float
-    cash_flows: list[Union[float, int]]
+    cash_flows: List[Union[float, int]]
     npv: float
     min_savings: np.ndarray[Any, Any]
     nper: np.ndarray[Any, Any]
@@ -341,7 +341,7 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
 
 def PlotCaseResults(
     Assumptions: Assumption, inputs: Input, outputs: Output, CaseName: str
-) -> list[Figure]:
+) -> List[Figure]:
     # plots the basic use case model outputs
     figEcon, axes = plt.subplots(2, figsize=(10, 10))
     ax = axes[0]
@@ -445,7 +445,7 @@ def PlotCaseResults(
 
 def SenstivityAnalysis(
     key: str, minMaxPerc: int, numLevels: int, assumptions: Assumption, inputs: Input
-) -> tuple[np.ndarray[Any, Any], list[Any], list[Any]]:  # FIXME: add correct list types
+) -> Tuple[np.ndarray[Any, Any], List[Any], List[Any]]:  # FIXME: add correct list types
     # performs a sensitivity analysis on the variable in the dict 'key' in either the assumptions or inputs dict
     # Inputs:
     # key - the name of the dictionary key in the inputs and assumptinos for which the analysis is performed
