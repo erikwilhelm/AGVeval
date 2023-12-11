@@ -47,6 +47,7 @@ manpower needs? In other words, where can human resources be more effectively al
 from typing import Any, List, Tuple, Union
 from matplotlib.figure import Figure
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 import warnings
 import numpy_financial as npf
@@ -121,8 +122,8 @@ class Output:
     cumulative_agv_annual_cost: float
     cash_flows: List[Union[float, int]]
     npv: float
-    min_savings: np.ndarray[Any, Any]
-    nper: np.ndarray[Any, Any]
+    min_savings: NDArray[Any]
+    nper: NDArray[Any]
     num_robots: int
 
 
@@ -445,7 +446,7 @@ def PlotCaseResults(
 
 def SenstivityAnalysis(
     key: str, minMaxPerc: int, numLevels: int, assumptions: Assumption, inputs: Input
-) -> Tuple[np.ndarray[Any, Any], List[Any], List[Any]]:  # FIXME: add correct list types
+) -> Tuple[NDArray[Any], List[Any], List[Any]]:  # FIXME: add correct list types
     # performs a sensitivity analysis on the variable in the dict 'key' in either the assumptions or inputs dict
     # Inputs:
     # key - the name of the dictionary key in the inputs and assumptinos for which the analysis is performed
