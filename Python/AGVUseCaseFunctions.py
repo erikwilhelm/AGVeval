@@ -127,6 +127,61 @@ class Output:
     num_robots: int
 
 
+def read_assumption_values_from_excel(path: str) -> Assumption:
+    df = pd.read_excel(io=path, sheet_name="Inp_Custom")
+
+    assumption = Assumption(
+        discount_rate=float(df.iat[1, 1]),
+        electricity_price=float(df.iat[2, 1]),
+        diesel_price=float(df.iat[3, 1]),
+        diesel_energy=float(df.iat[4, 1]),
+        data_carriage=float(df.iat[5, 1]),
+        years_of_operation=float(df.iat[6, 1]),
+        technology_readiness=int(df.iat[7, 1]),
+        company_acceptance=float(df.iat[8, 1]),
+        mission_similarity=float(df.iat[9, 1]),
+        mission_determinism=float(df.iat[10, 1]),
+    )
+
+    return assumption
+
+
+def read_input_values_from_excel(path: str) -> Input:
+    df = pd.read_excel(io=path, sheet_name="Inp_Custom")
+
+    input = Input(
+        mission_length=float(df.iat[13, 1]),
+        material_to_move=int(df.iat[14, 1]),
+        yearly_operation_days=int(df.iat[15, 1]),
+        vehicle=Vehicle(
+            vehicle_cost=int(df.iat[18, 1]),
+            vehicle_energy_consumption=float(df.iat[19, 1]),
+            operator_hourly_wage=int(df.iat[20, 1]),
+            vehicle_maintainance=int(df.iat[21, 1]),
+            vehicle_eol_cost=int(df.iat[22, 1]),
+            vehicle_average_speed=int(df.iat[23, 1]),
+            vehicle_material_capacity=int(df.iat[24, 1]),
+            vehicle_max_shift_length=int(df.iat[25, 1]),
+        ),
+        agv=Agv(
+            agv_cost=int(df.iat[28, 1]),
+            agv_leasing=int(df.iat[29, 1]),
+            agv_maintenance=int(df.iat[30, 1]),
+            agv_eol_cost=int(df.iat[31, 1]),
+            agv_average_speed=int(df.iat[32, 1]),
+            agv_charge_rate=int(df.iat[33, 1]),
+            agv_disengagement_per_km=float(df.iat[34, 1]),
+            agv_disengagement_time=int(df.iat[35, 1]),
+            agv_material_capacity=int(df.iat[36, 1]),
+            agv_energy_consumption=float(df.iat[37, 1]),
+            agv_max_shift_length=int(df.iat[38, 1]),
+            agv_data_use=int(df.iat[39, 1]),
+        ),
+    )
+
+    return input
+
+
 def ModelAGVMission(assumptions: Assumption, inputs: Input):
     """This function enables the modeling of AGV speed and disengagement rates
     to enable accurate project costs and therefore profitability
