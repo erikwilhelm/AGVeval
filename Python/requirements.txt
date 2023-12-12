@@ -1,4 +1,4 @@
-numpy
-numpy_financial
-pandas
-matplotlib
+numpy>=1.26.2
+numpy_financial>=1.0.0
+pandas>=2.1.4
+matplotlib>=3.8.2
