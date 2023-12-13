@@ -215,3 +215,6 @@ octave-workspace
 
 # Output PDF documents
 *.pdf
+
+# DS_Store
+.DS_Store

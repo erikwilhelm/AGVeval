@@ -58,6 +58,8 @@ from AGVUseCaseFunctions import (
     ModelAGVUseCase,
     PlotCaseResults,
     SenstivityAnalysis,
+    read_input_values_from_excel,
+    read_assumption_values_from_excel,
 )
 from dataclasses import fields
 
@@ -97,6 +99,10 @@ assumptions = Assumption(
     mission_similarity=MISSION_SIMILARITY,
     mission_determinism=MISSION_DETERMINISM,
 )
+
+# FIXME: we need to discuss how we want to handle this
+assumptions = read_assumption_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
+
 
 """
 BASELINE Inputs
@@ -209,6 +215,8 @@ inputs = Input(
     ),
 )
 
+# FIXME: we need to discuss how we want to handle this
+inputs = read_input_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
 
 ##### MAIN CODE SECTION #####
 ##### BASELINE calculation
