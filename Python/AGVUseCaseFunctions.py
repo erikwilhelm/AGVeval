@@ -59,10 +59,10 @@ from dataclasses import dataclass, field
 @dataclass
 class Assumption:
     discount_rate: float = field(metadata={"unit": "%"})
-    electricity_price: float = field(metadata={"unit": "EUR/kWh"})
-    diesel_price: float = field(metadata={"unit": "EUR/L"})
+    electricity_price: float = field(metadata={"unit": "CHF/kWh"})
+    diesel_price: float = field(metadata={"unit": "CHF/L"})
     diesel_energy: float = field(metadata={"unit": "kWh/L"})
-    data_carriage: float = field(metadata={"unit": "EUR/MB"})
+    data_carriage: float = field(metadata={"unit": "CHF/MB"})
     years_of_operation: float = field(metadata={"unit": "years"})
     technology_readiness: int = field(metadata={"unit": "TRL"})
     company_acceptance: float = field(metadata={"unit": "CompanyAcceptance"})
@@ -76,11 +76,11 @@ class Vehicle:
     A human operated vehicle
     """
 
-    vehicle_cost: int = field(metadata={"unit": "EUR"})
+    vehicle_cost: int = field(metadata={"unit": "CHF"})
     vehicle_energy_consumption: float = field(metadata={"unit": "L/100km"})
-    operator_hourly_wage: int = field(metadata={"unit": "EUR/hr"})
-    vehicle_maintainance: int = field(metadata={"unit": "EUR/month"})
-    vehicle_eol_cost: int = field(metadata={"unit": "EUR for end of life disposal"})
+    operator_hourly_wage: int = field(metadata={"unit": "CHF/hr"})
+    vehicle_maintainance: int = field(metadata={"unit": "CHF/month"})
+    vehicle_eol_cost: int = field(metadata={"unit": "CHF for end of life disposal"})
     vehicle_average_speed: int = field(metadata={"unit": "km/hr"})
     vehicle_material_capacity: int = field(metadata={"unit": "units"})
     vehicle_max_shift_length: int = field(metadata={"unit": "hours"})
@@ -90,10 +90,10 @@ class Vehicle:
 class Agv:
     """An autonomous guided vehicle"""
 
-    agv_cost: int = field(metadata={"unit": "EUR"})
-    agv_leasing: int = field(metadata={"unit": "EUR/vehicle/year"})
-    agv_maintenance: int = field(metadata={"unit": "EUR/month"})
-    agv_eol_cost: int = field(metadata={"unit": "EUR for end of life disposal"})
+    agv_cost: int = field(metadata={"unit": "CHF"})
+    agv_leasing: int = field(metadata={"unit": "CHF/vehicle/year"})
+    agv_maintenance: int = field(metadata={"unit": "CHF/month"})
+    agv_eol_cost: int = field(metadata={"unit": "CHF for end of life disposal"})
     agv_average_speed: int = field(metadata={"unit": "km/hr"})
     agv_charge_rate: int = field(metadata={"unit": "kW"})
     agv_disengagement_per_km: float = field(
@@ -272,7 +272,7 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         VehicleDailyTime / inputs.vehicle.vehicle_max_shift_length
     )  # Number of Vehicles needed to acheive mission
     # Human Cost inputs
-    VehiclePurchasePrice = NumberOfVehicles * inputs.vehicle.vehicle_cost  # EUR
+    VehiclePurchasePrice = NumberOfVehicles * inputs.vehicle.vehicle_cost  # CHF
     # Energy
     VehicleEnergyCost = (
         inputs.vehicle.vehicle_energy_consumption
@@ -280,20 +280,20 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         * assumptions.diesel_price
         * VehicleDailyDistance
         * inputs.yearly_operation_days
-    )  # EUR/year
+    )  # CHF/year
     # Operator cost
     VehicleOperatorCost = (
         VehicleDailyTime
         * inputs.vehicle.operator_hourly_wage
         * inputs.yearly_operation_days
-    )  # EUR/year
+    )  # CHF/year
 
     VehicleAnnualOperationCost = VehicleEnergyCost + VehicleOperatorCost
-    VehicleAnnualMaintenanceCost = inputs.vehicle.vehicle_maintainance * 12  # EUR/year
+    VehicleAnnualMaintenanceCost = inputs.vehicle.vehicle_maintainance * 12  # CHF/year
     VehicleAnnualCost = NumberOfVehicles * (
         VehicleAnnualOperationCost + VehicleAnnualMaintenanceCost
     )
-    VehicleEndOfLifeCost = NumberOfVehicles * inputs.vehicle.vehicle_eol_cost  # EUR
+    VehicleEndOfLifeCost = NumberOfVehicles * inputs.vehicle.vehicle_eol_cost  # CHF
 
     ## AGV
     # AGV missions
@@ -310,8 +310,8 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
     NumberOfAGVs: int = np.ceil(AGVDailyTime / inputs.agv.agv_max_shift_length)
 
     ## AGV cost inputs
-    AGVPurchasePrice = NumberOfAGVs * inputs.agv.agv_cost  # EUR
-    AGVLeasingPrice = NumberOfAGVs * inputs.agv.agv_leasing  # EUR
+    AGVPurchasePrice = NumberOfAGVs * inputs.agv.agv_cost  # CHF
+    AGVLeasingPrice = NumberOfAGVs * inputs.agv.agv_leasing  # CHF
     if AGVPurchasePrice > 0 and AGVLeasingPrice > 0:
         warnings.warn(
             "Warning: AGV purchase and leasing price are both set, only one should be set"
@@ -322,13 +322,13 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         * inputs.agv.agv_energy_consumption
         * AGVDailyDistance
         * inputs.yearly_operation_days
-    )  # EUR/year
+    )  # CHF/year
     # Data Carriage
     AGVDataCost = (
         assumptions.data_carriage
         * inputs.agv.agv_data_use
         * inputs.yearly_operation_days
-    )  # EUR/year
+    )  # CHF/year
     # Human intervention (disengagements)
     AGVCostPerDisengagement = (
         inputs.agv.agv_disengagement_time / 60 * inputs.vehicle.operator_hourly_wage
@@ -338,27 +338,27 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         * AGVCostPerDisengagement
         * AGVDailyDistance
         * inputs.yearly_operation_days
-    )  # EUR/year
+    )  # CHF/year
     # Total costs
     AGVAnnualOperationCost = (
         AGVEnegyCost + AGVDataCost + AGVDisengagementCost
-    )  # EUR/year
-    AGVAnnualMaintenanceCost = inputs.agv.agv_maintenance * 12  # EUR/year
+    )  # CHF/year
+    AGVAnnualMaintenanceCost = inputs.agv.agv_maintenance * 12  # CHF/year
     AGVAnnualCost = (
         NumberOfAGVs * (AGVAnnualOperationCost + AGVAnnualMaintenanceCost)
         + AGVLeasingPrice
     )
-    AGVEndOfLifeCost = NumberOfAGVs * inputs.agv.agv_eol_cost  # EUR
+    AGVEndOfLifeCost = NumberOfAGVs * inputs.agv.agv_eol_cost  # CHF
 
     # Initial investment price
     if VehiclePurchasePrice < AGVPurchasePrice:
-        InvestmentCost = VehiclePurchasePrice - AGVPurchasePrice  # EUR
+        InvestmentCost = VehiclePurchasePrice - AGVPurchasePrice  # CHF
     else:
-        InvestmentCost = 0  # EUR Handles the case where AGVs are leased, and therefore not part of the overall cost
+        InvestmentCost = 0  # CHF Handles the case where AGVs are leased, and therefore not part of the overall cost
 
-    AnnualSavings = VehicleAnnualCost - AGVAnnualCost  # EUR/year
+    AnnualSavings = VehicleAnnualCost - AGVAnnualCost  # CHF/year
 
-    EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost  # EUR
+    EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost  # CHF
 
     # Establish cash flows
 
@@ -414,44 +414,71 @@ def PlotCaseResults(
         + inputs.agv.agv_eol_cost
     )
     totalCosts = [BaselineTotal, AGVTotal]
-    ax.bar(["Vehicle", "AGV"], totalCosts)
-    ax.set_title("%s Comparison of Undiscounted Lifetime costs" % CaseName)
+    ax.bar(["Manual Vehicle", "AGV"], totalCosts)
+    #ax.set_title("%s Comparison of Undiscounted Lifetime costs" % CaseName)
+    ax.set_title("Comparison of Undiscounted Lifetime costs")
     ax.set_ylabel("CHF Lifetime Cost (no discounting)")
+    ax.grid(axis = 'y')
     ax2 = axes[1]
     ax2.axis([0, 12, 0, 12])
     ax2.text(
         0,
-        10,
-        "%s Discounted net present value of the investment: %3.2f EUR"
-        % (CaseName, outputs.npv),
+        11,
+        "Discounted net present value of the investment: %3.2f CHF"
+        % outputs.npv,
         fontsize=15,
     )
 
     if outputs.npv < 0:
         ax2.text(
             0,
-            7,
-            "%s Project has a negative net present value,\n savings must be %3.2f EUR/year to be profitable \n presently the savings are only %3.2f EUR/year"
+            10,
+            "%s Project has a negative net present value,\n savings must be %3.2f CHF/year to be profitable \n presently the savings are only %3.2f CHF/year"
             % (CaseName, np.abs(outputs.min_savings), outputs.annual_savings),
             fontsize=15,
         )
 
     ax2.text(
         0,
-        5,
-        "%s Number of robots to match human performance: %d units"
-        % (CaseName, outputs.num_robots),
+        9,
+        "Number of robots to match human performance: %d units"
+        % outputs.num_robots,
         fontsize=15,
     )
 
     ax2.text(
         0,
-        3,
-        "%s Return on the robotic investment requires: %3.2f years"
-        % (CaseName, outputs.nper),
-        fontsize=15,
+        8,
+        "Return on the robotic investment requires: %3.2f years"
+        % outputs.nper,
+        fontsize=15, 
+        weight='bold',
     )
     ax2.axis("off")
+    
+    ax2.text(
+        0,
+        6,
+        "Annual operation cost* AGV: %3.2f CHF"
+        % (outputs.cumulative_agv_annual_cost/Assumptions.years_of_operation),
+        fontsize=15,
+    )
+    
+    ax2.text(
+        0,
+        5,
+        "Annual operation cost* manual vehicle: %3.2f CHF"
+        % (outputs.cumulative_vehicle_annual_cost/Assumptions.years_of_operation),
+        fontsize=15,
+    )
+    
+    ax2.text(
+        0,
+        3,
+        "*Annual operation cost includes energy and data consumption, maintenance costs and expenses for an operator and disengagements"
+        % (outputs.cumulative_vehicle_annual_cost/Assumptions.years_of_operation),
+        fontsize=8,
+    )
 
     # Plot the cash flows for the project
     plotDF = pd.DataFrame()
@@ -463,14 +490,16 @@ def PlotCaseResults(
         ax=ax, kind="bar", color=plotDF.CFpos.map({True: "k", False: "r"})
     )
     ax.set_xlabel("Operation Year")
-    ax.set_ylabel("EUR")
-    ax.set_title("%s Project Cash Flows" % CaseName)
+    ax.set_ylabel("CHF")
+    ax.set_title("Project Cash Flows")
+    ax.grid(axis = 'y')
     start, end = ax.get_ylim()
     ax.yaxis.set_ticks(
-        np.arange(np.round(start / 1000) * 1000, np.round(end / 1000) * 1000, 5000)
+        np.arange(np.round(start / 1000) * 1000, np.round(end / 1000) * 1000, 10000)
     )
     figFlow = plt.gcf()
     figFlow.set_figwidth(15)
+    figFlow.set_figheight(10)
 
     # Plot the fraction of the costs for the baseline and autonomous case
     figShare, (ax1, ax2) = plt.subplots(

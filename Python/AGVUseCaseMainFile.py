@@ -70,21 +70,21 @@ plt.rcParams["axes.autolimit_mode"] = "round_numbers"
 # Financial
 DISCOUNT_RATE = 0.05  # Five percent per annum
 # Energy
-ELECTRICITY_PRICE = 0.23  # EUR/kWh
-DIESEL_PRICE = 1.79  # EUR/L
-DIESEL_ENERGY = 9.6  # kWh/L
+ELECTRICITY_PRICE = 0.18  # CHF/kWh
+DIESEL_PRICE = 1.72  # CHF/L
+DIESEL_ENERGY = 9.8  # kWh/L
 # Data
-DATA_CARRIAGE = 0.7  # EUR/MB
+DATA_CARRIAGE = 0.7  # CHF/MB
 # Lifecycle
-YEARS_OF_OPERATION = 7.0  # Years that the robotic system is in operation
+YEARS_OF_OPERATION = 5.0  # Years that the robotic system is in operation
 # Technology Readiness
-TECHNOLOGY_READINESS = 5  # Technology validated in relevant environment (industrially relevant environment in the case of key enabling technologies)
+TECHNOLOGY_READINESS = 7  # Technology validated in relevant environment (industrially relevant environment in the case of key enabling technologies)
 # Company Acceptance
-COMPANY_ACCEPTANCE = 0.7  # represents a 'good' level of AGV acceptance within a company
+COMPANY_ACCEPTANCE = 0.6  # represents a 'good' level of AGV acceptance within a company
 # Mission Similarity
-MISSION_SIMILARITY = 0.8  # represents an 'excellent' level of mission similarity
+MISSION_SIMILARITY = 0.6  # represents an 'excellent' level of mission similarity
 # Mission Determinism
-MISSION_DETERMINISM = 0.6  # represents a 'sufficient' level of mission determinism
+MISSION_DETERMINISM = 0.7  # represents a 'sufficient' level of mission determinism
 
 
 assumptions = Assumption(
@@ -101,7 +101,7 @@ assumptions = Assumption(
 )
 
 # FIXME: we need to discuss how we want to handle this
-assumptions = read_assumption_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
+#assumptions = read_assumption_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
 
 
 """
@@ -122,20 +122,20 @@ YearlyOperationDays = 212 #operating days per year. Note: differentiate availabi
 
 ##  CURRENT Operator driven vehicle use inputs
 
-VehicleCost=74000 #EUR
+VehicleCost=74000 #CHF
 VehicleEnergyConsumption = 6.5 #L/100km
-OperatorHourlyWage = 51 #EUR/hr
-VehicleMaintenance = 120 #EUR/month
-VehicleEOLCost = 1800 #EUR for end of life disposal
+OperatorHourlyWage = 51 #CHF/hr
+VehicleMaintenance = 120 #CHF/month
+VehicleEOLCost = 1800 #CHF for end of life disposal
 VehicleAverageSpeed=12 #km/hr
 VehicleMaterialCapacity = 40 #amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 VehicleMaxShiftLength = 8 #hrs max which the vehicle can operate
 
 ##  CURRENT AGV use inputs
-AGVCost = 115000 #EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
-AGVLeasing = 0 #EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
-AGVMaintenance = 200 #EUR/month
-AGVEOLCost = 4000 #EUR for end of life disposal
+AGVCost = 115000 #CHF/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+AGVLeasing = 0 #CHF/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
+AGVMaintenance = 200 #CHF/month
+AGVEOLCost = 4000 #CHF for end of life disposal
 AGVAverageSpeed= 3 #km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate= 3 #kW
 AGVDisengagementPerKm = 0.01 #disengagements per driven km
@@ -150,34 +150,34 @@ AGVDataUse = 4 #MB/day
 
 ########### INSERT START ############
 #  CURRENT Mission Inputs
-MissionLength = 2  # km driven per misson round moving material
-MaterialToMove = 200  # amount of material (kg, m^3 etc) required to be moved from A to B for the mission
-YearlyOperationDays = 212  # operating days per year. Note: differentiate availability for AGV vs human using max shift length
+MissionLength = 0.7  # km driven per misson round moving material
+MaterialToMove = 57  # amount of material (kg, m^3 etc) required to be moved from A to B for the mission
+YearlyOperationDays = 260  # operating days per year. Note: differentiate availability for AGV vs human using max shift length
 
 #  CURRENT Operator driven vehicle use inputs
 
-VehicleCost = 74000  # EUR
-VehicleEnergyConsumption = 6.5  # L/100km
-OperatorHourlyWage = 51  # EUR/hr
-VehicleMaintenance = 120  # EUR/month
-VehicleEOLCost = 1800  # EUR for end of life disposal
-VehicleAverageSpeed = 12  # km/hr
-VehicleMaterialCapacity = 40  # amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+VehicleCost = 40000  # CHF
+VehicleEnergyConsumption = 16.6  # L/100km
+OperatorHourlyWage = 49  # CHF/hr
+VehicleMaintenance = 120  # CHF/month
+VehicleEOLCost = 1800  # CHF for end of life disposal
+VehicleAverageSpeed = 8  # km/hr
+VehicleMaterialCapacity = 1  # amount of material (kg, m^3 etc) which can be moved from A to B for the mission
 VehicleMaxShiftLength = 8  # hrs max which the vehicle can operate
 
 #  CURRENT AGV use inputs
 AGVCost = (
-    115000  # EUR/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
+    201956  # CHF/vehicle  Note - set to zero if Leasing cost is set (Default 115000)
 )
-AGVLeasing = 0  # EUR/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
-AGVMaintenance = 200  # EUR/month
-AGVEOLCost = 4000  # EUR for end of life disposal
+AGVLeasing = 0  # CHF/vehicle/year  Note - set to zero if AGV cost is set (Default 7000)
+AGVMaintenance = 200  # CHF/month
+AGVEOLCost = 4000  # CHF for end of life disposal
 AGVAverageSpeed = 3  # km/hr (including all stop and blocked time caused by obstacles)
 AGVChargeRate = 3  # kW
-AGVDisengagementPerKm = 0.01  # disengagements per driven km
+AGVDisengagementPerKm = 0.025  # disengagements per driven km
 AGVDisengagementTime = 5  # minutes per disengagement
-AGVMaterialCapacity = 20  # amount of material (kg, m^3 etc) which can be moved from A to B for the mission
-AGVEnergyConsumption = 0.14  # kWh/km
+AGVMaterialCapacity = 1  # amount of material (kg, m^3 etc) which can be moved from A to B for the mission
+AGVEnergyConsumption = 0.5  # kWh/km
 AGVMaxShiftLength = (
     24  # if the AGV is unable to operate 24/7, an additional penalty can be added here
 )
@@ -216,14 +216,13 @@ inputs = Input(
 )
 
 # FIXME: we need to discuss how we want to handle this
-inputs = read_input_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
+#inputs = read_input_values_from_excel("../Excel/AGVUseCaseModel.xlsx")
 
 ##### MAIN CODE SECTION #####
 ##### BASELINE calculation
 outputsBaseline = ModelAGVUseCase(assumptions, inputs)
 ## Plot the BASELINE results
 figs = PlotCaseResults(assumptions, inputs, outputsBaseline, "BASELINE")
-
 ##### CHEAPER AGV calculation
 inputs.agv.agv_cost = int(0.75 * inputs.agv.agv_cost)  # reduced AGV cost
 outputsCheaper = ModelAGVUseCase(assumptions, inputs)
@@ -281,7 +280,6 @@ for key in allkeys:
         (npvVec[-1] - npvVec[0]) / 2 * minMaxPercent, 2
     )
 
-
 # Plot Sensitivity graph
 box = ax.get_position()
 ax.set_position((box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9))
@@ -290,7 +288,7 @@ ax.legend(
 )
 ax.set_title("Sensitivity to % Change from Baseline")
 ax.set_xlabel("% Change from Baseline")
-ax.set_ylabel("NPV (EUR)")
+ax.set_ylabel("NPV (CHF)")
 
 # Slope table
 df_slope["abs_slope"] = np.abs(df_slope["slope"])
@@ -410,7 +408,7 @@ ax.legend(
 )
 ax.set_title("Sensitivity to Model input assumptions")
 ax.set_xlabel("Input Value")
-ax.set_ylabel("NPV (EUR)")
+ax.set_ylabel("NPV (CHF)")
 
 # Save results
 pp = PdfPages("AGVUseCaseModelResults.pdf")
@@ -419,6 +417,7 @@ pp.savefig(figs[1])
 pp.savefig(figs[2])
 pp.savefig(figSense)
 pp.savefig(figSlope)
+
 # can add additional modified cases here
 # CHEAPER AGV
 pp.savefig(figsCheaper[0])
