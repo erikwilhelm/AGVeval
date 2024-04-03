@@ -51,7 +51,6 @@ from numpy.typing import NDArray
 import pandas as pd
 import warnings
 import numpy_financial as npf
-from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 from dataclasses import dataclass, field
 
