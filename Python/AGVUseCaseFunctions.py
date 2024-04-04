@@ -357,9 +357,7 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         InvestmentCost = 0  # EUR Handles the case where AGVs are leased, and therefore not part of the overall cost
 
     AnnualSavings = VehicleAnnualCost - AGVAnnualCost  # EUR/year
-    print(AnnualSavings)
     EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost  # EUR
-    print(InvestmentCost)
     # Establish cash flows
 
     cashFlows = (
@@ -367,8 +365,6 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         + [AnnualSavings] * (int(assumptions.years_of_operation) - 1)
         + [AnnualSavings + EndOfLifePrice]
     )
-    print(cashFlows)
-    print(assumptions.discount_rate)
     ## Return outputs
     # calculate the project net present value
     npv: float = npf.npv(assumptions.discount_rate, cashFlows)
