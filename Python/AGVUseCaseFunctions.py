@@ -324,7 +324,8 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
     )  # EUR/year
     # Data Carriage
     AGVDataCost = (
-        assumptions.data_carriage
+        NumberOfAGVs
+        * assumptions.data_carriage
         * inputs.agv.agv_data_use
         * inputs.yearly_operation_days
     )  # EUR/year
@@ -356,9 +357,9 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         InvestmentCost = 0  # EUR Handles the case where AGVs are leased, and therefore not part of the overall cost
 
     AnnualSavings = VehicleAnnualCost - AGVAnnualCost  # EUR/year
-
+    print(AnnualSavings)
     EndOfLifePrice = VehicleEndOfLifeCost - AGVEndOfLifeCost  # EUR
-
+    print(InvestmentCost)
     # Establish cash flows
 
     cashFlows = (
@@ -366,7 +367,8 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
         + [AnnualSavings] * (int(assumptions.years_of_operation) - 1)
         + [AnnualSavings + EndOfLifePrice]
     )
-
+    print(cashFlows)
+    print(assumptions.discount_rate)
     ## Return outputs
     # calculate the project net present value
     npv: float = npf.npv(assumptions.discount_rate, cashFlows)
@@ -376,14 +378,13 @@ def ModelAGVUseCase(assumptions: Assumption, inputs: Input) -> Output:
     )
     # calculate the project payback period
     nper = npf.nper(assumptions.discount_rate, AnnualSavings, InvestmentCost)
-
     outputs = Output(
         annual_savings=AnnualSavings,
         cumulative_vehicle_annual_cost=(
-            VehicleAnnualOperationCost * assumptions.years_of_operation
+            VehicleAnnualCost * assumptions.years_of_operation
         ),
         cumulative_agv_annual_cost=(
-            AGVAnnualOperationCost * assumptions.years_of_operation
+            AGVAnnualCost * assumptions.years_of_operation
         ),
         cash_flows=cashFlows,
         npv=npv,
