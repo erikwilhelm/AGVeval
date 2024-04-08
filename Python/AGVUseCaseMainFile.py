@@ -313,7 +313,8 @@ ax.set_title("Ranking of most sensitive parameters and their slopes")
 
 ########## Mission analysis
 
-minMaxVec = np.linspace(0.1, 1, 10)  # build the sensitivity range
+minMaxVec = np.linspace(0.1, 1, 10)  # build the sensitivity range for acceptance params
+minMaxVecTR = np.linspace(1, 9, 9)  # build the sensitivity range for technology readiness
 figMissionSense = plt.figure(figsize=(22, 14))
 ax = figMissionSense.add_subplot()
 # Generate all keys list
@@ -337,64 +338,118 @@ for key in MissionKeys:
     disTimeMission = []
     disPerKmMission = []
     minMaxKey = []
-    for perc in minMaxVec:
-        setattr(assumptions, key, perc)  # step through the values from 0.1 up to 1
-        if (
-            key == "technology_readiness"
-        ):  # if the parameter is tech readiness, multiply by 10
-            setattr(assumptions, key, getattr(assumptions, key) * 10)
-        minMaxKey.append(getattr(assumptions, key))
-        (
-            ModAverageSpeed,
-            ModDisengagementsPerKm,
-            ModTimePerDisengagement,
-        ) = ModelAGVMission(assumptions, inputs)
-        inputs.agv.agv_average_speed = ModAverageSpeed
-        inputs.agv.agv_disengagement_per_km = ModDisengagementsPerKm
-        inputs.agv.agv_disengagement_time = ModTimePerDisengagement
-        outputsMission = ModelAGVUseCase(assumptions, inputs)
-        npvVectorsMission.append(outputsMission.npv)
-        speedVecMission.append(ModAverageSpeed)
-        disTimeMission.append(ModTimePerDisengagement)
-        disPerKmMission.append(ModDisengagementsPerKm)
-        inputs.agv.agv_average_speed = (
-            origSpeed  # return the value to its original value
+    if (
+        key == "technology_readiness"
+        ):  
+        for perc in minMaxVecTR:
+            setattr(assumptions, key, perc)  # step through the values from 0.1 up to 1
+            minMaxKey.append(getattr(assumptions, key))
+            (
+                ModAverageSpeed,
+                ModDisengagementsPerKm,
+                ModTimePerDisengagement,
+            ) = ModelAGVMission(assumptions, inputs)
+            inputs.agv.agv_average_speed = ModAverageSpeed
+            inputs.agv.agv_disengagement_per_km = ModDisengagementsPerKm
+            inputs.agv.agv_disengagement_time = ModTimePerDisengagement
+            outputsMission = ModelAGVUseCase(assumptions, inputs)
+            npvVectorsMission.append(outputsMission.npv)
+            speedVecMission.append(ModAverageSpeed)
+            disTimeMission.append(ModTimePerDisengagement)
+            disPerKmMission.append(ModDisengagementsPerKm)
+            inputs.agv.agv_average_speed = (
+                origSpeed  # return the value to its original value
+            )
+            inputs.agv.agv_disengagement_per_km = (
+                origDisengagements  # return the value to its original value
+            )
+            inputs.agv.agv_disengagement_time = (
+                origTimePerDisengagement  # return the value to its original value
+            )
+            setattr(assumptions, key, origVal)  # return the value to its original value
+        axsModel[0, 0].plot(minMaxVecTR/10, speedVecMission)
+        axsModel[0, 0].plot(minMaxVecTR/10, origSpeed * np.ones([len(minMaxVecTR)]), "k--")
+        axsModel[0, 0].set_title("Ave. Speed")
+        axsModel[0, 0].set_xlabel("Level")
+        axsModel[0, 0].set_ylabel("km/hr")
+        axsModel[0, 1].plot(minMaxVecTR/10, disTimeMission)
+        axsModel[0, 1].plot(
+            minMaxVecTR/10, origTimePerDisengagement * np.ones([len(minMaxVecTR)]), "k--"
         )
-        inputs.agv.agv_disengagement_per_km = (
-            origDisengagements  # return the value to its original value
+        axsModel[0, 1].set_title("Dis. Time")
+        axsModel[0, 1].set_xlabel("Level")
+        axsModel[0, 1].set_ylabel("min")
+        axsModel[1, 0].plot(minMaxVecTR/10, disPerKmMission)
+        axsModel[1, 0].plot(
+            minMaxVecTR/10, origDisengagements * np.ones([len(minMaxVecTR)]), "k--"
         )
-        inputs.agv.agv_disengagement_time = (
-            origTimePerDisengagement  # return the value to its original value
+        axsModel[1, 0].set_title("Dis./km")
+        axsModel[1, 0].set_xlabel("Level")
+        axsModel[1, 0].set_ylabel("Number")
+        axsModel[1, 1].plot(minMaxVecTR/10, np.zeros([len(minMaxVecTR)]), label=key+'/10')
+        axsModel[1, 1].legend(loc=2)
+        axsModel[1, 1].axis("off")
+        
+        ax.plot(
+            minMaxVecTR/10,
+            npvVectorsMission,
+            label=key + " from %.2f to %.2f" % (minMaxKey[0], minMaxKey[-1]),
         )
-        setattr(assumptions, key, origVal)  # return the value to its original value
-    axsModel[0, 0].plot(minMaxVec, speedVecMission)
-    axsModel[0, 0].plot(minMaxVec, origSpeed * np.ones([len(minMaxVec)]), "k--")
-    axsModel[0, 0].set_title("Ave. Speed")
-    axsModel[0, 0].set_xlabel("Level")
-    axsModel[0, 0].set_ylabel("km/hr")
-    axsModel[0, 1].plot(minMaxVec, disTimeMission)
-    axsModel[0, 1].plot(
-        minMaxVec, origTimePerDisengagement * np.ones([len(minMaxVec)]), "k--"
-    )
-    axsModel[0, 1].set_title("Dis. Time")
-    axsModel[0, 1].set_xlabel("Level")
-    axsModel[0, 1].set_ylabel("min")
-    axsModel[1, 0].plot(minMaxVec, disPerKmMission)
-    axsModel[1, 0].plot(
-        minMaxVec, origDisengagements * np.ones([len(minMaxVec)]), "k--"
-    )
-    axsModel[1, 0].set_title("Dis./km")
-    axsModel[1, 0].set_xlabel("Level")
-    axsModel[1, 0].set_ylabel("Number")
-    axsModel[1, 1].plot(minMaxVec, np.zeros([len(minMaxVec)]), label=key)
-    axsModel[1, 1].legend(loc=2)
-    axsModel[1, 1].axis("off")
+    else:
+        for perc in minMaxVec:
+            setattr(assumptions, key, perc)  # step through the values from 0.1 up to 1
+            minMaxKey.append(getattr(assumptions, key))
+            (
+                ModAverageSpeed,
+                ModDisengagementsPerKm,
+                ModTimePerDisengagement,
+            ) = ModelAGVMission(assumptions, inputs)
+            inputs.agv.agv_average_speed = ModAverageSpeed
+            inputs.agv.agv_disengagement_per_km = ModDisengagementsPerKm
+            inputs.agv.agv_disengagement_time = ModTimePerDisengagement
+            outputsMission = ModelAGVUseCase(assumptions, inputs)
+            npvVectorsMission.append(outputsMission.npv)
+            speedVecMission.append(ModAverageSpeed)
+            disTimeMission.append(ModTimePerDisengagement)
+            disPerKmMission.append(ModDisengagementsPerKm)
+            inputs.agv.agv_average_speed = (
+                origSpeed  # return the value to its original value
+            )
+            inputs.agv.agv_disengagement_per_km = (
+                origDisengagements  # return the value to its original value
+            )
+            inputs.agv.agv_disengagement_time = (
+                origTimePerDisengagement  # return the value to its original value
+            )
+            setattr(assumptions, key, origVal)  # return the value to its original value
+        axsModel[0, 0].plot(minMaxVec, speedVecMission)
+        axsModel[0, 0].plot(minMaxVec, origSpeed * np.ones([len(minMaxVec)]), "k--")
+        axsModel[0, 0].set_title("Ave. Speed")
+        axsModel[0, 0].set_xlabel("Level")
+        axsModel[0, 0].set_ylabel("km/hr")
+        axsModel[0, 1].plot(minMaxVec, disTimeMission)
+        axsModel[0, 1].plot(
+            minMaxVec, origTimePerDisengagement * np.ones([len(minMaxVec)]), "k--"
+        )
+        axsModel[0, 1].set_title("Dis. Time")
+        axsModel[0, 1].set_xlabel("Level")
+        axsModel[0, 1].set_ylabel("min")
+        axsModel[1, 0].plot(minMaxVec, disPerKmMission)
+        axsModel[1, 0].plot(
+            minMaxVec, origDisengagements * np.ones([len(minMaxVec)]), "k--"
+        )
+        axsModel[1, 0].set_title("Dis./km")
+        axsModel[1, 0].set_xlabel("Level")
+        axsModel[1, 0].set_ylabel("Number")
+        axsModel[1, 1].plot(minMaxVec, np.zeros([len(minMaxVec)]), label=key)
+        axsModel[1, 1].legend(loc=2)
+        axsModel[1, 1].axis("off")
 
-    ax.plot(
-        minMaxVec,
-        npvVectorsMission,
-        label=key + " from %.2f to %.2f" % (minMaxKey[0], minMaxKey[-1]),
-    )
+        ax.plot(
+            minMaxVec,
+            npvVectorsMission,
+            label=key + " from %.2f to %.2f" % (minMaxKey[0], minMaxKey[-1]),
+        )
 
 axsModel[1, 1].plot(minMaxVec, np.zeros([len(minMaxVec)]), label="Baseline")
 ax.plot(
