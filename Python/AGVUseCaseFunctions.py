@@ -243,7 +243,7 @@ def ModelAGVMission(assumptions: Assumption, inputs: Input):
 
     # Sanity check outputs
     AverageSpeed = np.clip(AverageSpeed, 0.5, 64)  # km/hr
-    DisengagementsPerKm = np.clip(DisengagementsPerKm, 0.0008, 2)  # dis./km
+    DisengagementsPerKm = np.clip(DisengagementsPerKm, 0.0008, 10)  # dis./km
     TimePerDisengagement = np.clip(TimePerDisengagement, 0.5, 120)  # minutes
 
     return AverageSpeed, DisengagementsPerKm, TimePerDisengagement

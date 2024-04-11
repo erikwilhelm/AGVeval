@@ -78,7 +78,7 @@ DATA_CARRIAGE = 0.7  # EUR/MB
 # Lifecycle
 YEARS_OF_OPERATION = 7.0  # Years that the robotic system is in operation
 # Technology Readiness
-TECHNOLOGY_READINESS = 5  # Technology validated in relevant environment (industrially relevant environment in the case of key enabling technologies)
+TECHNOLOGY_READINESS = 8  # Technology validated in relevant environment (industrially relevant environment in the case of key enabling technologies)
 # Company Acceptance
 COMPANY_ACCEPTANCE = 0.7  # represents a 'good' level of AGV acceptance within a company
 # Mission Similarity
@@ -342,7 +342,7 @@ for key in MissionKeys:
         key == "technology_readiness"
         ):  
         for perc in minMaxVecTR:
-            setattr(assumptions, key, perc)  # step through the values from 0.1 up to 1
+            setattr(assumptions, key, perc)  # step through the values from 1 up to 9
             minMaxKey.append(getattr(assumptions, key))
             (
                 ModAverageSpeed,
